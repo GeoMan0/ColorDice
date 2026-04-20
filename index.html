@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roll Color Dice</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-    
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5655926023636540" crossorigin="anonymous"></script>
-
     <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
         body {
             font-family: 'Rajdhani', sans-serif;
             display: flex;
@@ -18,135 +18,99 @@
             padding-top: 50px;
             min-height: 100vh;
             overflow-x: hidden;
-            transition: background 0.5s ease;
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
         }
 
         body.theme-default { background-image: linear-gradient(-45deg, #5ab2ff, #2980b9, #6dd5ed, #2193b0); }
-        body.theme-green { background-image: linear-gradient(-45deg, #11998e, #38ef7d, #00b09b, #96c93d); }
-        body.theme-red { background-image: linear-gradient(-45deg, #cb2d3e, #ef473a, #ff0844, #ffb199); }
-        body.theme-bw { background-image: linear-gradient(-45deg, #232526, #414345, #000000, #434343); }
-        body.theme-bronze { background-image: linear-gradient(-45deg, #cd7f32, #8b5a2b, #a0522d, #cd853f); }
-        body.theme-silver { background-image: linear-gradient(-45deg, #bdc3c7, #2c3e50, #8e9eab, #eef2f3); }
-        body.theme-gold { background-image: linear-gradient(-45deg, #ffd700, #daa520, #b8860b, #ffdf00); }
+        body.theme-green   { background-image: linear-gradient(-45deg, #11998e, #38ef7d, #00b09b, #96c93d); }
+        body.theme-red     { background-image: linear-gradient(-45deg, #cb2d3e, #ef473a, #ff0844, #ffb199); }
+        body.theme-bw      { background-image: linear-gradient(-45deg, #232526, #414345, #000000, #434343); }
+        body.theme-bronze  { background-image: linear-gradient(-45deg, #cd7f32, #8b5a2b, #a0522d, #cd853f); }
+        body.theme-silver  { background-image: linear-gradient(-45deg, #bdc3c7, #2c3e50, #8e9eab, #eef2f3); }
+        body.theme-gold    { background-image: linear-gradient(-45deg, #ffd700, #daa520, #b8860b, #ffdf00); }
 
         @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
+        /* ── TITLE ── */
         h1 {
             color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
             font-size: 3em;
             margin-bottom: 10px;
             font-family: 'Comic Sans MS', sans-serif;
             letter-spacing: 2px;
+            text-shadow:
+                2px 2px 4px rgba(0,0,0,0.4),
+                0 0 20px rgba(255,255,255,0.3);
+            animation: titleFloat 3s ease-in-out infinite;
+        }
+        @keyframes titleFloat {
+            0%,100% { transform: translateY(0); }
+            50%      { transform: translateY(-5px); }
         }
 
+        /* ── HEADER RIGHT ── */
         .header-right {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 200;
+            position: absolute; top: 20px; right: 25px;
+            display: flex; align-items: center; gap: 12px; z-index: 200;
         }
-
         .server-text {
-            color: white;
-            font-weight: 800;
-            font-size: 1.2em;
+            color: white; font-weight: 800; font-size: 1.2em;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
+            display: flex; align-items: baseline; gap: 6px;
         }
-
-        .server-text small {
-            font-size: 0.6em;
-            font-weight: 500;
-            opacity: 0.9;
-        }
+        .server-text small { font-size: 0.6em; font-weight: 500; opacity: 0.9; }
 
         .discord-btn {
-            background-color: #5865F2;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: #5865F2; width: 45px; height: 45px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s; text-decoration: none;
         }
-
-        .discord-btn:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 6px 14px rgba(0,0,0,0.4);
-        }
-
+        .discord-btn:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 6px 14px rgba(0,0,0,0.4); }
         .discord-btn svg { width: 26px; height: 26px; fill: white; }
 
-        /* ========== WATERMARK AMÉLIORÉ ========== */
+        /* ── WATERMARK GLOW ── */
         .watermark {
-            position: fixed;
-            bottom: 20px;
-            right: 25px;
-            color: rgba(255, 255, 255, 0.95);
+            position: fixed; bottom: 20px; right: 25px;
+            color: rgba(255,255,255,0.95);
             font-family: 'Orbitron', monospace;
-            font-size: 1.15em;
-            font-weight: 700;
-            font-style: normal;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            pointer-events: none;
-            z-index: 200;
-            text-shadow:
-                0 0 6px rgba(255,255,255,0.9),
-                0 0 14px rgba(255,255,255,0.7),
-                0 0 28px rgba(255,255,255,0.5),
-                0 0 50px rgba(200,220,255,0.4);
+            font-size: 1.15em; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            pointer-events: none; z-index: 200;
             animation: glowPulse 2.5s ease-in-out infinite;
         }
-
         @keyframes glowPulse {
-            0%, 100% {
-                text-shadow:
-                    0 0 6px rgba(255,255,255,0.9),
-                    0 0 14px rgba(255,255,255,0.7),
-                    0 0 28px rgba(255,255,255,0.5),
-                    0 0 50px rgba(200,220,255,0.4);
+            0%,100% {
+                text-shadow: 0 0 6px rgba(255,255,255,0.9), 0 0 14px rgba(255,255,255,0.7),
+                             0 0 28px rgba(255,255,255,0.5), 0 0 50px rgba(200,220,255,0.4);
                 opacity: 1;
             }
             50% {
-                text-shadow:
-                    0 0 10px rgba(255,255,255,1),
-                    0 0 22px rgba(255,255,255,0.9),
-                    0 0 45px rgba(255,255,255,0.7),
-                    0 0 80px rgba(200,220,255,0.6);
+                text-shadow: 0 0 10px rgba(255,255,255,1), 0 0 22px rgba(255,255,255,0.9),
+                             0 0 45px rgba(255,255,255,0.7), 0 0 80px rgba(200,220,255,0.6);
                 opacity: 0.85;
             }
         }
 
-        /* ========== CONTROLS AMÉLIORÉS ========== */
+        /* ── CONTROLS ── */
         .controls-top {
-            display: flex;
-            gap: 14px;
-            margin-bottom: 30px;
-            padding: 14px 22px;
-            border-radius: 16px;
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            display: flex; gap: 14px; margin-bottom: 30px;
+            padding: 14px 22px; border-radius: 16px;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.25);
             box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
         }
-
+        .select-group { display: flex; flex-direction: column; gap: 5px; }
+        .select-label {
+            font-family: 'Orbitron', monospace; font-size: 0.58em; font-weight: 700;
+            color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase; padding-left: 4px;
+        }
         .select-wrapper { position: relative; display: inline-block; }
         .select-wrapper::after {
             content: '▾'; position: absolute; right: 13px; top: 50%;
@@ -154,322 +118,509 @@
             font-size: 1em; pointer-events: none; transition: transform 0.2s ease;
         }
         .select-wrapper:hover::after { transform: translateY(-50%) translateY(2px); }
-
         select {
-            appearance: none; -webkit-appearance: none; padding: 11px 40px 11px 16px;
+            appearance: none; -webkit-appearance: none;
+            padding: 11px 40px 11px 16px;
             font-family: 'Orbitron', monospace; font-size: 0.72em; font-weight: 700;
-            letter-spacing: 1px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.45);
-            background: rgba(255, 255, 255, 0.12); color: #ffffff; cursor: pointer;
-            outline: none; text-transform: uppercase; transition: all 0.2s ease;
+            letter-spacing: 1px; border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.45);
+            background: rgba(255,255,255,0.12); color: #fff;
+            cursor: pointer; outline: none; text-transform: uppercase;
+            transition: all 0.2s ease; min-width: 200px;
             box-shadow: 0 4px 14px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.18);
-            min-width: 200px;
         }
-
         select:hover {
-            background: rgba(255, 255, 255, 0.22); border-color: rgba(255, 255, 255, 0.75);
+            background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.75);
             box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 0 12px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.25);
             transform: translateY(-1px);
         }
-
         select:focus {
-            border-color: #ffd700; box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3), 0 6px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+            border-color: #ffd700;
+            box-shadow: 0 0 0 3px rgba(255,215,0,0.3), 0 6px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
         }
-
         select option { background-color: #1a1a2e; color: white; font-family: 'Rajdhani', sans-serif; font-weight: 600; }
         select option:disabled { color: #888; }
-        
-        .select-group { display: flex; flex-direction: column; gap: 5px; }
-        .select-label {
-            font-family: 'Orbitron', monospace; font-size: 0.58em; font-weight: 700;
-            color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase; padding-left: 4px;
-        }
 
-        /* ========== DÉS ========== */
+        /* ── DICE CONTAINER ── */
         .dice-container {
             display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
-            gap: 15px; margin: 20px 0; width: 90%; max-width: 900px; min-height: 150px; position: relative;
+            gap: 15px; margin: 20px 0; width: 90%; max-width: 900px;
+            min-height: 150px; position: relative;
+        }
+
+        /* ── 3D DIE ── */
+        .die-wrapper {
+            perspective: 500px;
         }
 
         .die {
-            width: 100px; height: 100px; background-color: #fff; border-radius: 15px;
-            border: 6px solid white; box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            width: 100px; height: 100px;
+            background: #ffffff;
+            border-radius: 18px;
+            border: 4px solid rgba(255,255,255,0.9);
+            box-shadow:
+                0 8px 20px rgba(0,0,0,0.35),
+                inset 0 2px 0 rgba(255,255,255,0.6),
+                inset 0 -2px 0 rgba(0,0,0,0.15);
             display: flex; justify-content: center; align-items: center;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.1s;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                        background 0.3s ease,
+                        box-shadow 0.3s ease;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        /* Top-left corner shine only — does NOT tint the main color */
+        .die::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 55%; height: 45%;
+            border-radius: 14px 0 50% 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, transparent 100%);
+            pointer-events: none;
+        }
+        .die.medium { width: 60px; height: 60px; border-width: 3px; border-radius: 12px; }
+        .die.small  { width: 40px; height: 40px; border-width: 2px; border-radius: 9px;  }
+        .die .dot {
+            width: 26%; height: 26%;
+            background: rgba(255,255,255,0.92);
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 0 2px rgba(0,0,0,0.08);
+            position: relative;
+            z-index: 2;
         }
 
-        .die.medium { width: 60px; height: 60px; border-width: 4px; border-radius: 10px; }
-        .die.small { width: 40px; height: 40px; border-width: 3px; border-radius: 8px; }
-
-        .die .dot { width: 22%; height: 22%; background-color: white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
-
-        @keyframes tremble {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(-3px, 3px) rotate(-3deg); }
-            50% { transform: translate(3px, -3px) rotate(3deg); }
-            75% { transform: translate(-3px, -3px) rotate(-2deg); }
-            100% { transform: translate(3px, 3px) rotate(2deg); }
+        /* Shake animation */
+        @keyframes shake {
+            0%   { transform: translate(0,0) rotate(0deg); }
+            10%  { transform: translate(-4px, 4px) rotate(-5deg); }
+            20%  { transform: translate(4px, -4px) rotate(5deg); }
+            30%  { transform: translate(-4px, -4px) rotate(-3deg); }
+            40%  { transform: translate(4px, 4px) rotate(3deg); }
+            50%  { transform: translate(-3px, 2px) rotate(-6deg); }
+            60%  { transform: translate(3px, -2px) rotate(6deg); }
+            70%  { transform: translate(-2px, 3px) rotate(-4deg); }
+            80%  { transform: translate(2px, -3px) rotate(4deg); }
+            90%  { transform: translate(-1px, 1px) rotate(-2deg); }
+            100% { transform: translate(1px, -1px) rotate(2deg); }
         }
 
-        .suspense { animation: tremble 0.08s infinite; background-color: #ffffff !important; }
-        .pop { transform: scale(1.2); }
+        /* Flip reveal animation */
+        @keyframes flipReveal {
+            0%   { transform: rotateY(0deg) scale(1); }
+            40%  { transform: rotateY(90deg) scale(0.85); }
+            60%  { transform: rotateY(-30deg) scale(1.15); }
+            80%  { transform: rotateY(10deg) scale(1.05); }
+            100% { transform: rotateY(0deg) scale(1); }
+        }
 
+        /* Pop bounce on reveal */
+        @keyframes popBounce {
+            0%   { transform: scale(1); }
+            30%  { transform: scale(1.35); }
+            55%  { transform: scale(0.9); }
+            75%  { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+
+        .die.suspense {
+            animation: shake 0.1s infinite linear;
+            background: #ffffff !important;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(255,255,255,0.3),
+                        inset 0 2px 0 rgba(255,255,255,0.6) !important;
+        }
+
+        .die.flipping {
+            animation: flipReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .die.popping {
+            animation: popBounce 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+        }
+
+        /* Colored die glow */
+        .die.colored {
+            box-shadow:
+                0 8px 25px rgba(0,0,0,0.3),
+                0 0 20px var(--die-glow, rgba(255,255,255,0.4)),
+                inset 0 2px 4px rgba(255,255,255,0.4),
+                inset 0 -2px 4px rgba(0,0,0,0.15);
+        }
+
+        /* ── ROLL BUTTON ── */
         button#rollBtn {
-            background-color: #ffd700; color: white; border: 4px solid white; border-radius: 8px;
-            padding: 15px 50px; font-size: 2em; font-weight: 900; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            text-shadow: 1px 1px 2px #d4af37, -1px -1px 0 #d4af37, 1px -1px 0 #d4af37, -1px 1px 0 #d4af37;
-            margin-bottom: 20px; margin-top: 30px; transition: all 0.1s; z-index: 10;
+            position: relative;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: white;
+            border: 3px solid rgba(255,255,255,0.9);
+            border-radius: 14px;
+            padding: 16px 55px;
+            font-size: 2em;
+            font-weight: 900;
+            font-family: 'Rajdhani', sans-serif;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.15s ease;
+            z-index: 10;
+            margin-bottom: 20px;
+            margin-top: 30px;
+            text-shadow: 0 2px 4px rgba(180,120,0,0.6);
+            box-shadow:
+                0 6px 20px rgba(0,0,0,0.3),
+                0 0 0 0 rgba(255,215,0,0.4),
+                inset 0 2px 0 rgba(255,255,255,0.3);
+            animation: btnPulse 2s ease-in-out infinite;
+        }
+        @keyframes btnPulse {
+            0%,100% { box-shadow: 0 6px 20px rgba(0,0,0,0.3), 0 0 0 0 rgba(255,215,0,0.5), inset 0 2px 0 rgba(255,255,255,0.3); }
+            50%      { box-shadow: 0 6px 20px rgba(0,0,0,0.3), 0 0 0 12px rgba(255,215,0,0), inset 0 2px 0 rgba(255,255,255,0.3); }
         }
 
-        button#rollBtn:active:not(:disabled) { transform: translateY(4px) scale(0.95); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        button#rollBtn:disabled { background-color: #bdc3c7; text-shadow: none; border-color: #95a5a6; cursor: not-allowed; transform: scale(0.95); }
-
-        .colors-info {
-            background-color: rgba(255, 255, 255, 0.3); padding: 10px 20px; border-radius: 5px;
-            color: white; font-weight: bold; font-size: 1.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            backdrop-filter: blur(5px); margin-bottom: 20px; z-index: 10;
+        /* Shine sweep */
+        button#rollBtn::before {
+            content: '';
+            position: absolute; top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+            animation: btnShine 3s ease-in-out infinite;
+        }
+        @keyframes btnShine {
+            0%   { left: -100%; }
+            40%  { left: 150%; }
+            100% { left: 150%; }
         }
 
+        button#rollBtn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 0 25px rgba(255,215,0,0.4), inset 0 2px 0 rgba(255,255,255,0.3);
+            animation: none;
+        }
+        button#rollBtn:active:not(:disabled) {
+            transform: translateY(3px) scale(0.96);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.2);
+        }
+        button#rollBtn:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            text-shadow: none;
+            border-color: rgba(255,255,255,0.4);
+            cursor: not-allowed;
+            animation: none;
+            transform: scale(0.96);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        button#rollBtn:disabled::before { display: none; }
+
+        /* ── COMBO DISPLAY ── */
         #combo-display {
-            position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
-            font-size: 4em; color: #ff2a2a; font-weight: 900; font-family: 'Comic Sans MS', sans-serif;
-            text-transform: uppercase; text-shadow: 3px 3px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+            position: absolute; top: -70px; left: 50%; transform: translateX(-50%);
+            font-size: 4em; color: #ff2a2a; font-weight: 900;
+            font-family: 'Comic Sans MS', sans-serif; text-transform: uppercase;
+            text-shadow: 3px 3px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
             opacity: 0; pointer-events: none; z-index: 100; white-space: nowrap;
         }
-
-        .show-combo { animation: popCombo 0.3s forwards; }
-
         @keyframes popCombo {
-            0% { opacity: 0; transform: translateX(-50%) scale(0.3) rotate(-5deg); }
-            50% { opacity: 1; transform: translateX(-50%) scale(1.2) rotate(3deg); }
+            0%   { opacity: 0; transform: translateX(-50%) scale(0.2) rotate(-10deg); }
+            50%  { opacity: 1; transform: translateX(-50%) scale(1.3) rotate(4deg); }
+            75%  { transform: translateX(-50%) scale(0.95) rotate(-1deg); }
             100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
         }
+        .show-combo { animation: popCombo 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards; }
 
-        /* ========== SPOTS PUBLICITAIRES RÉELS ========== */
-        .ad-space {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
+        /* ── COLORS INFO ── */
+        .colors-info {
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            padding: 10px 22px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-weight: 700; font-size: 1.1em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            margin-bottom: 20px; z-index: 10;
         }
 
-        .ad-side {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 160px;
-            height: 600px;
+        /* ── PARTICLE CANVAS ── */
+        #particles {
+            position: fixed; inset: 0;
+            pointer-events: none; z-index: 50;
         }
-        .ad-left { left: 10px; }
+
+        /* ── ADS ── */
+        .ad-space { display: flex; justify-content: center; align-items: center; z-index: 50; }
+        .ad-side { position: fixed; top: 50%; transform: translateY(-50%); width: 160px; height: 600px; }
+        .ad-left  { left: 10px; }
         .ad-right { right: 10px; }
-
-        .ad-bottom {
-            width: 728px;
-            max-width: 90%;
-            height: 90px;
-            margin-top: 10px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 1200px) {
-            .ad-side { display: none; } /* Cache les publicités latérales sur les petits écrans pour ne pas gêner le jeu */
-        }
+        .ad-bottom { width: 728px; max-width: 90%; height: 90px; margin-top: 10px; margin-bottom: 30px; }
+        @media (max-width: 1200px) { .ad-side { display: none; } }
     </style>
 </head>
-<body class="theme-default">
+<body class="theme-bw">
 
-    <div class="ad-space ad-side ad-left">
-        <ins class="adsbygoogle"
-             style="display:inline-block;width:160px;height:600px"
-             data-ad-client="ca-pub-5655926023636540"
-             data-ad-slot="8785113279"
-             data-ad-format="vertical"
-             data-full-width-responsive="true"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-    </div>
+<canvas id="particles"></canvas>
 
-    <div class="ad-space ad-side ad-right">
-        <ins class="adsbygoogle"
-             style="display:inline-block;width:160px;height:600px"
-             data-ad-client="ca-pub-5655926023636540"
-             data-ad-slot="1769324961"
-             data-ad-format="vertical"
-             data-full-width-responsive="true"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-    </div>
+<!-- ADS LATERALES -->
+<div class="ad-space ad-side ad-left">
+    <ins class="adsbygoogle" style="display:inline-block;width:160px;height:600px"
+         data-ad-client="ca-pub-5655926023636540" data-ad-slot="8785113279"
+         data-ad-format="vertical" data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+<div class="ad-space ad-side ad-right">
+    <ins class="adsbygoogle" style="display:inline-block;width:160px;height:600px"
+         data-ad-client="ca-pub-5655926023636540" data-ad-slot="1769324961"
+         data-ad-format="vertical" data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
 
-    <div class="header-right">
-        <div class="server-text">GeoMan x SM <small>with retox</small></div>
-        <a href="https://discord.gg/GVkHyNvMUH" target="_blank" class="discord-btn">
-            <svg viewBox="0 0 127.14 96.36">
-                <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.33,46,96.22,53,91.08,65.69,84.69,65.69Z"/>
-            </svg>
-        </a>
-    </div>
+<div class="header-right">
+    <div class="server-text">GeoMan x SM <small>with retox</small></div>
+    <a href="https://discord.gg/GVkHyNvMUH" target="_blank" class="discord-btn">
+        <svg viewBox="0 0 127.14 96.36">
+            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.33,46,96.22,53,91.08,65.69,84.69,65.69Z"/>
+        </svg>
+    </a>
+</div>
 
-    <h1>ROLL COLOR DICE</h1>
-    
-    <div class="controls-top">
-        <div class="select-group">
-            <span class="select-label">🎨 Theme</span>
-            <div class="select-wrapper">
-                <select id="themeSelect" onchange="changeTheme()">
-                    <option value="default">DEFAULT</option>
-                    <option value="green">GREEN</option>
-                    <option value="red">RED</option>
-                    <option value="bw">B&W</option>
-                    <option value="bronze" id="opt-bronze" disabled>BRONZE 🔒</option>
-                    <option value="silver" id="opt-silver" disabled>SILVER 🔒</option>
-                    <option value="gold" id="opt-gold" disabled>GOLD 🔒</option>
-                </select>
-            </div>
-        </div>
-        <div class="select-group">
-            <span class="select-label">🎲 Number of Dice</span>
-            <div class="select-wrapper">
-                <select id="diceCountSelect" onchange="generateDice()"></select>
-            </div>
+<h1>ROLL COLOR DICE</h1>
+
+<div class="controls-top">
+    <div class="select-group">
+        <span class="select-label">🎨 Theme</span>
+        <div class="select-wrapper">
+            <select id="themeSelect" onchange="changeTheme()">
+                <option value="default">DEFAULT</option>
+                <option value="green">GREEN</option>
+                <option value="red">RED</option>
+                <option value="bw" selected>B&W</option>
+                <option value="bronze" id="opt-bronze" disabled>BRONZE 🔒</option>
+                <option value="silver" id="opt-silver" disabled>SILVER 🔒</option>
+                <option value="gold"   id="opt-gold"   disabled>GOLD 🔒</option>
+            </select>
         </div>
     </div>
-
-    <div class="dice-container" id="diceContainer">
-        <div id="combo-display"></div>
+    <div class="select-group">
+        <span class="select-label">🎲 Number of Dice</span>
+        <div class="select-wrapper">
+            <select id="diceCountSelect" onchange="generateDice()"></select>
+        </div>
     </div>
+</div>
 
-    <button id="rollBtn" onclick="startRollAnimation()">ROLL AGAIN !</button>
+<div class="dice-container" id="diceContainer">
+    <div id="combo-display"></div>
+</div>
 
-    <div class="colors-info">
-        Possible colors are: 
-        <span style="color: #ff0000;">Red</span>, 
-        <span style="color: #ffa500;">Orange</span>, 
-        <span style="color: #ffff00;">Yellow</span>, 
-        <span style="color: #008000;">Green</span>, 
-        <span style="color: #0000ff;">Blue</span> and 
-        <span style="color: #800080;">Purple</span>.
-    </div>
+<button id="rollBtn" onclick="startRollAnimation()">ROLL AGAIN !</button>
 
-    <div class="ad-space ad-bottom">
-        <ins class="adsbygoogle"
-             style="display:inline-block;width:728px;height:90px"
-             data-ad-client="ca-pub-5655926023636540"
-             data-ad-slot="9456243292"
-             data-ad-format="horizontal"
-             data-full-width-responsive="true"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-    </div>
+<div class="colors-info">
+    Possible colors are:
+    <span style="color:#ff6666;font-weight:900;">Red</span>,
+    <span style="color:#ffcc44;font-weight:900;">Orange</span>,
+    <span style="color:#ffff66;font-weight:900;">Yellow</span>,
+    <span style="color:#66ff99;font-weight:900;">Green</span>,
+    <span style="color:#66aaff;font-weight:900;">Blue</span> and
+    <span style="color:#cc88ff;font-weight:900;">Purple</span>.
+</div>
 
-    <div class="watermark">Created by Retox &amp; Geoman</div>
+<div class="ad-space ad-bottom">
+    <ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px"
+         data-ad-client="ca-pub-5655926023636540" data-ad-slot="9456243292"
+         data-ad-format="horizontal" data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
 
-    <script>
-        const colors = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#800080'];
-        let totalRolls = 0;
-        let comboCount = 0;
-        let spamTimeout;
+<div class="watermark">Created by Retox &amp; Geoman</div>
 
-        const countSelect = document.getElementById('diceCountSelect');
-        for(let i = 1; i <= 50; i++) {
-            let opt = document.createElement('option');
-            opt.value = i;
-            opt.innerHTML = i + (i === 1 ? ' DIE' : ' DICE');
-            if(i === 3) opt.selected = true;
-            countSelect.appendChild(opt);
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const COLORS = ['#ff0000','#ffa500','#ffff00','#008000','#0000ff','#800080'];
+const GLOW   = ['rgba(255,80,80,0.7)','rgba(255,180,40,0.7)','rgba(255,255,60,0.7)',
+                'rgba(40,200,80,0.7)', 'rgba(60,120,255,0.7)','rgba(180,60,255,0.7)'];
+
+let totalRolls = 0;
+let comboCount = 0;
+let spamTimeout;
+
+// ── DICE COUNT SELECT ────────────────────────────────────────────
+const countSelect = document.getElementById('diceCountSelect');
+for (let i = 1; i <= 50; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = i + (i === 1 ? ' DIE' : ' DICE');
+    if (i === 3) opt.selected = true;
+    countSelect.appendChild(opt);
+}
+
+// ── GENERATE DICE ────────────────────────────────────────────────
+function generateDice() {
+    const container = document.getElementById('diceContainer');
+    const comboEl   = document.getElementById('combo-display');
+    container.innerHTML = '';
+    container.appendChild(comboEl);
+
+    const count = parseInt(countSelect.value);
+    let sizeClass = count > 25 ? 'small' : count > 9 ? 'medium' : '';
+
+    for (let i = 0; i < count; i++) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'die-wrapper';
+
+        const die = document.createElement('div');
+        die.className = 'die ' + sizeClass;
+        die.innerHTML = '<div class="dot"></div>';
+
+        wrapper.appendChild(die);
+        container.appendChild(wrapper);
+    }
+}
+
+// ── THEME ────────────────────────────────────────────────────────
+function changeTheme() {
+    document.body.className = 'theme-' + document.getElementById('themeSelect').value;
+}
+
+// ── UNLOCK DISPLAY ───────────────────────────────────────────────
+function updateUnlocks() {
+    [{ id:'opt-bronze', rolls:10, name:'BRONZE' },
+     { id:'opt-silver', rolls:20, name:'SILVER'  },
+     { id:'opt-gold',   rolls:30, name:'GOLD'    }].forEach(c => {
+        const opt = document.getElementById(c.id);
+        if (totalRolls >= c.rolls) {
+            opt.disabled = false;
+            opt.textContent = c.name + ' ✅ UNLOCKED';
+        } else {
+            opt.textContent = c.name + ' 🔒 (' + (c.rolls - totalRolls) + ' rolls left)';
         }
+    });
+}
 
-        function generateDice() {
-            const container = document.getElementById('diceContainer');
-            const comboEl = document.getElementById('combo-display');
-            container.innerHTML = '';
-            container.appendChild(comboEl);
+// ── PARTICLES ────────────────────────────────────────────────────
+const canvas = document.getElementById('particles');
+const ctx    = canvas.getContext('2d');
+let particles = [];
 
-            const count = parseInt(countSelect.value);
-            let sizeClass = '';
-            if(count > 25) sizeClass = 'small';
-            else if (count > 9) sizeClass = 'medium';
+function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-            for(let i = 0; i < count; i++) {
-                let die = document.createElement('div');
-                die.className = 'die ' + sizeClass;
-                die.innerHTML = '<div class="dot"></div>';
-                container.appendChild(die);
-            }
-        }
+function spawnParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        const angle  = Math.random() * Math.PI * 2;
+        const speed  = 2 + Math.random() * 5;
+        particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 3,
+            radius: 4 + Math.random() * 5,
+            color,
+            alpha: 1,
+            decay: 0.02 + Math.random() * 0.02,
+            gravity: 0.15
+        });
+    }
+}
 
-        function changeTheme() {
-            const val = document.getElementById('themeSelect').value;
-            document.body.className = 'theme-' + val;
-        }
+function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter(p => p.alpha > 0);
+    particles.forEach(p => {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.98;
+        p.alpha -= p.decay;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.restore();
+    });
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
 
-        function updateUnlocks() {
-            const checks = [
-                { id: 'opt-bronze', rolls: 10, name: 'BRONZE' },
-                { id: 'opt-silver', rolls: 20, name: 'SILVER' },
-                { id: 'opt-gold', rolls: 30, name: 'GOLD' }
-            ];
+// ── ROLL ANIMATION ───────────────────────────────────────────────
+function startRollAnimation() {
+    const btn      = document.getElementById('rollBtn');
+    const dies     = document.querySelectorAll('.die');
+    const comboEl  = document.getElementById('combo-display');
 
-            checks.forEach(c => {
-                const opt = document.getElementById(c.id);
-                if(totalRolls >= c.rolls) {
-                    opt.disabled = false;
-                    opt.innerHTML = c.name + ' ✅ UNLOCKED';
-                } else {
-                    opt.innerHTML = c.name + ' 🔒 (' + (c.rolls - totalRolls) + ' rolls left)';
-                }
-            });
-        }
+    totalRolls++;
+    comboCount++;
+    updateUnlocks();
 
-        function startRollAnimation() {
-            const btn = document.getElementById('rollBtn');
-            const diceElements = document.querySelectorAll('.die');
-            const comboEl = document.getElementById('combo-display');
+    // Combo
+    if (comboCount > 1) {
+        comboEl.textContent = 'COMBO x' + comboCount + ' !';
+        comboEl.classList.remove('show-combo');
+        void comboEl.offsetWidth;
+        comboEl.classList.add('show-combo');
+        comboEl.style.opacity = '1';
+    }
 
-            totalRolls++;
-            comboCount++;
-            updateUnlocks();
+    // Start shaking
+    dies.forEach(die => {
+        die.classList.remove('flipping','popping','colored');
+        die.style.backgroundColor = '';
+        die.style.setProperty('--die-glow','');
+        // Tiny delay offset per die for organic feel
+        void die.offsetWidth;
+        die.classList.add('suspense');
+    });
 
-            if (comboCount > 1) {
-                comboEl.innerText = "COMBO x" + comboCount + " !";
-                comboEl.classList.remove('show-combo');
-                void comboEl.offsetWidth;
-                comboEl.classList.add('show-combo');
-                comboEl.style.opacity = '1';
-            }
+    clearTimeout(spamTimeout);
 
-            diceElements.forEach(die => {
-                die.style.backgroundColor = '#ffffff';
-                die.classList.add('suspense');
-                die.classList.remove('pop');
-            });
+    spamTimeout = setTimeout(() => {
+        btn.disabled = true;
 
-            clearTimeout(spamTimeout);
+        // Reveal each die with a staggered flip
+        dies.forEach((die, i) => {
+            setTimeout(() => {
+                const colorIdx  = Math.floor(Math.random() * COLORS.length);
+                const color     = COLORS[colorIdx];
+                const glow      = GLOW[colorIdx];
 
-            spamTimeout = setTimeout(() => {
-                btn.disabled = true;
+                die.classList.remove('suspense');
+                die.style.backgroundColor = color;
+                die.style.setProperty('--die-glow', glow);
+                die.classList.add('colored');
 
-                diceElements.forEach(die => {
-                    die.classList.remove('suspense');
-                    const finalColor = colors[Math.floor(Math.random() * colors.length)];
-                    die.style.backgroundColor = finalColor;
-                    die.classList.add('pop');
-                });
+                // Choose flip or pop randomly
+                const anim = Math.random() > 0.4 ? 'flipping' : 'popping';
+                die.classList.add(anim);
+                die.addEventListener('animationend', () => die.classList.remove(anim), { once: true });
 
-                comboEl.classList.remove('show-combo');
-                comboEl.style.opacity = '0';
-                comboCount = 0;
+                // Spawn particles from die position
+                const rect = die.getBoundingClientRect();
+                spawnParticles(
+                    rect.left + rect.width / 2,
+                    rect.top  + rect.height / 2,
+                    color,
+                    dies.length <= 10 ? 18 : 8
+                );
 
-                setTimeout(() => {
-                    btn.disabled = false;
-                }, 500);
+            }, i * (dies.length > 20 ? 30 : 60));
+        });
 
-            }, 1500);
-        }
+        // Hide combo
+        comboEl.classList.remove('show-combo');
+        comboEl.style.opacity = '0';
+        comboCount = 0;
 
-        window.onload = generateDice;
-    </script>
+        // Re-enable button after all reveals + buffer
+        const totalDelay = dies.length * (dies.length > 20 ? 30 : 60) + 600;
+        setTimeout(() => { btn.disabled = false; }, totalDelay);
+
+    }, 1500);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+window.onload = generateDice;
+</script>
 </body>
 </html>
