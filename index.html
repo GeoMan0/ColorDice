@@ -675,19 +675,33 @@ window.onload = generateDice;
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const visitorsRef = ref(db, "online_users");
 
+  // Génération ou récupération de l'ID unique de l'appareil dans le LocalStorage
+  let deviceId = localStorage.getItem('colorDiceDeviceID');
+  if (!deviceId) {
+      // S'il n'existe pas, on crée un nouvel ID (par exemple: user_abc123)
+      deviceId = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('colorDiceDeviceID', deviceId);
+  }
+
+  // On crée un dossier spécifique pour cet utilisateur
+  const myDeviceRef = ref(db, `online_users/${deviceId}`);
   const connectedRef = ref(db, ".info/connected");
+
   onValue(connectedRef, (snap) => {
     if (snap.val() === true) {
-      const myRef = push(visitorsRef);
-      onDisconnect(myRef).remove();
-      set(myRef, true);
+      // Pour chaque onglet ouvert, on crée une petite connexion à l'intérieur du dossier de l'utilisateur
+      const tabRef = push(myDeviceRef);
+      // Quand l'onglet se ferme, Firebase supprime uniquement CETTE connexion
+      onDisconnect(tabRef).remove();
+      set(tabRef, true);
     }
   });
 
+  // Pour compter, on regarde combien il y a de "dossiers utilisateurs" (deviceId uniques)
+  const visitorsRef = ref(db, "online_users");
   onValue(visitorsRef, (snap) => {
-    // Utilisation de snap.size (Firebase v9+) à la place de snap.numChildren()
+    // La magie de Firebase : si un utilisateur ferme tous ses onglets, son dossier se supprime tout seul !
     const count = snap.size || 1;
     const countEl = document.getElementById("online-count");
     if (countEl) countEl.textContent = count;
