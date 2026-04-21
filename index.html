@@ -345,6 +345,29 @@
             pointer-events: none; z-index: 50;
         }
 
+        /* ── JOIN DISCORD ── */
+        .join-discord {
+            position: fixed; bottom: 20px; left: 25px;
+            z-index: 200; pointer-events: none;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.62em; font-weight: 700;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: rgba(255,255,255,0.9);
+            animation: joinGlow 2.5s ease-in-out infinite;
+        }
+        @keyframes joinGlow {
+            0%,100% {
+                text-shadow: 0 0 5px rgba(88,101,242,0.9), 0 0 12px rgba(88,101,242,0.7),
+                             0 0 24px rgba(88,101,242,0.5);
+                opacity: 0.85;
+            }
+            50% {
+                text-shadow: 0 0 8px rgba(88,101,242,1), 0 0 20px rgba(88,101,242,0.9),
+                             0 0 40px rgba(88,101,242,0.7);
+                opacity: 1;
+            }
+        }
+
         /* ── ADS ── */
         .ad-space { display: flex; justify-content: center; align-items: center; z-index: 50; }
         .ad-side { position: fixed; top: 50%; transform: translateY(-50%); width: 160px; height: 600px; }
@@ -357,8 +380,6 @@
 <body class="theme-bw">
 
 <canvas id="particles"></canvas>
-
-<div class="user-counter"><div class="ucl"><span class="dot-live"></span>100% Aleatoire</div><div class="ucl"><span class="dot-live"></span>100% Random</div></div>
 
 <!-- ADS LATERALES -->
 <div class="ad-space ad-side ad-left">
@@ -626,5 +647,7 @@ function startRollAnimation() {
 // ── INIT ─────────────────────────────────────────────────────────
 window.onload = generateDice;
 </script>
+<div class="join-discord">⟡ Join Server Discord</div>
+
 </body>
 </html>
