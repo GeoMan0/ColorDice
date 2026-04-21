@@ -687,7 +687,8 @@ window.onload = generateDice;
   });
 
   onValue(visitorsRef, (snap) => {
-    const count = snap.numChildren() || 1;
+    // Utilisation de snap.size (Firebase v9+) à la place de snap.numChildren()
+    const count = snap.size || 1;
     const countEl = document.getElementById("online-count");
     if (countEl) countEl.textContent = count;
   });
