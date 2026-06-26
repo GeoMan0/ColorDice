@@ -16,6 +16,42 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <script>
+            (() => {
+                'use strict';
+                // Emergency reset for old sticky anti-tamper flags.
+                // Usage: open the page with ?cdreset=1, then reload normally.
+                try {
+                    const params = new URLSearchParams(String(location.search || ''));
+                    const shouldReset = params.has('cdreset') || params.has('resetcd') || params.has('unlockcd');
+                    const staleKeys = [
+                        '__stg_lock_29',
+                        '__html_lock_51',
+                        '__vis_lock_73',
+                        '__vis_count_73',
+                        '__vis_time_73',
+                        'cdBlock',
+                        'colorDiceLastServerRoll'
+                    ];
+
+                    // Always remove old sticky lock flags from previous test versions.
+                    // Active injected scripts are still detected later during this load.
+                    for (const key of staleKeys) {
+                        try { sessionStorage.removeItem(key); } catch (err) {}
+                    }
+
+                    if (shouldReset) {
+                        try { localStorage.removeItem('cdBlock'); } catch (err) {}
+                        const cleanUrl = location.origin === 'null'
+                            ? location.href.replace(/([?&])(cdreset|resetcd|unlockcd)(=1|=true)?/gi, '$1').replace(/[?&]$/, '').replace('?&', '?')
+                            : location.origin + location.pathname + location.hash;
+                        try { history.replaceState(null, '', cleanUrl); } catch (err) {}
+                        console.warn('[ColorDice Reset] Old anti-tamper flags cleared.');
+                    }
+                } catch (err) {}
+            })();
+        </script>
         <script>
             (() => {
                 'use strict';
@@ -1645,20 +1681,16 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
 
             function showStorageTamperScreen(reason) {
-                try {
-                    sessionStorage.setItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY, '1');
-                } catch (err) {}
+                // No sticky session lock: active tampering still blocks immediately, but a clean reload can recover.
+                try { sessionStorage.removeItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY); } catch (err) {}
 
                 document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:44px;font-weight:900;margin-bottom:14px;line-height:1.15;">Script de triche détecté 🛡️</div><div style="font-size:18px;opacity:.78;margin-bottom:8px;">Le site a détecté une tentative de modification du stockage local.</div><div style="font-size:14px;opacity:.45;">Désactive Tampermonkey / l’extension puis recharge la page.</div></div></div>';
                 throw new Error('Storage tamper blocked: ' + reason);
             }
 
             function checkStorageTamperBlockState() {
-                try {
-                    if (sessionStorage.getItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY) === '1') {
-                        showStorageTamperScreen('blocked-session');
-                    }
-                } catch (err) {}
+                // Old versions stored a sticky block flag. Clear it so the site does not stay blocked after testing.
+                try { sessionStorage.removeItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY); } catch (err) {}
             }
 
             function enforceStoragePrototypeIntegrity() {
@@ -1748,20 +1780,16 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
 
             function showHtmlInjectionScreen(reason) {
-                try {
-                    sessionStorage.setItem(HTML_INJECTION_CONFIG.BLOCK_KEY, '1');
-                } catch (err) {}
+                // No sticky session lock: active injection still blocks immediately, but a clean reload can recover.
+                try { sessionStorage.removeItem(HTML_INJECTION_CONFIG.BLOCK_KEY); } catch (err) {}
 
                 document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:44px;font-weight:900;margin-bottom:14px;line-height:1.15;">Script injecté détecté 🧱</div><div style="font-size:18px;opacity:.78;margin-bottom:8px;">Le site a détecté une injection ou une modification invisible du HTML.</div><div style="font-size:14px;opacity:.45;">Désactive Tampermonkey / l’extension puis recharge la page.</div></div></div>';
                 throw new Error('HTML/script injection blocked: ' + reason);
             }
 
             function checkHtmlInjectionBlockState() {
-                try {
-                    if (sessionStorage.getItem(HTML_INJECTION_CONFIG.BLOCK_KEY) === '1') {
-                        showHtmlInjectionScreen('blocked-session');
-                    }
-                } catch (err) {}
+                // Old versions stored a sticky block flag. Clear it so the site does not stay blocked after testing.
+                try { sessionStorage.removeItem(HTML_INJECTION_CONFIG.BLOCK_KEY); } catch (err) {}
             }
 
             function sameFunction(a, b) {
@@ -1991,9 +2019,8 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
 
             function showVisualTamperScreen(reason) {
-                try {
-                    sessionStorage.setItem(VISUAL_TAMPER_CONFIG.BLOCK_KEY, '1');
-                } catch (err) {}
+                // No sticky session lock: active visual tampering still blocks immediately, but a clean reload can recover.
+                try { sessionStorage.removeItem(VISUAL_TAMPER_CONFIG.BLOCK_KEY); } catch (err) {}
 
                 document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:44px;font-weight:900;margin-bottom:14px;line-height:1.15;">Affichage modifié détecté 👀</div><div style="font-size:18px;opacity:.78;margin-bottom:8px;">Le site a détecté une modification visuelle des couleurs.</div><div style="font-size:14px;opacity:.45;">Reload la page sans script/extension pour continuer.</div></div></div>';
                 throw new Error('Visual tamper blocked: ' + reason);
@@ -2032,10 +2059,11 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
 
             function checkVisualBlockState() {
+                // Old versions stored a sticky block flag. Clear it so the site does not stay blocked after testing.
                 try {
-                    if (sessionStorage.getItem(VISUAL_TAMPER_CONFIG.BLOCK_KEY) === '1') {
-                        showVisualTamperScreen('blocked-session');
-                    }
+                    sessionStorage.removeItem(VISUAL_TAMPER_CONFIG.BLOCK_KEY);
+                    sessionStorage.removeItem(VISUAL_TAMPER_CONFIG.COUNT_KEY);
+                    sessionStorage.removeItem(VISUAL_TAMPER_CONFIG.TIME_KEY);
                 } catch (err) {}
             }
 
