@@ -1797,25 +1797,10 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
 
             function enforceRuntimePrototypeIntegrity() {
-                // Si un userscript fort remplace les primitives de DOM/API, on bloque.
-                if (!sameFunction(EventTarget.prototype.addEventListener, HTML_INJECTION_STATE.original.addEventListener)) showHtmlInjectionScreen('addEventListener-patched');
-                if (!sameFunction(EventTarget.prototype.removeEventListener, HTML_INJECTION_STATE.original.removeEventListener)) showHtmlInjectionScreen('removeEventListener-patched');
-                if (!sameFunction(Node.prototype.appendChild, HTML_INJECTION_STATE.original.appendChild)) showHtmlInjectionScreen('appendChild-patched');
-                if (!sameFunction(Node.prototype.insertBefore, HTML_INJECTION_STATE.original.insertBefore)) showHtmlInjectionScreen('insertBefore-patched');
-                if (!sameFunction(Node.prototype.replaceChild, HTML_INJECTION_STATE.original.replaceChild)) showHtmlInjectionScreen('replaceChild-patched');
-                if (!sameFunction(Node.prototype.removeChild, HTML_INJECTION_STATE.original.removeChild)) showHtmlInjectionScreen('removeChild-patched');
-                if (!sameFunction(Element.prototype.setAttribute, HTML_INJECTION_STATE.original.setAttribute)) showHtmlInjectionScreen('setAttribute-patched');
-                if (!sameFunction(Element.prototype.removeAttribute, HTML_INJECTION_STATE.original.removeAttribute)) showHtmlInjectionScreen('removeAttribute-patched');
-                if (!sameFunction(Document.prototype.querySelector, HTML_INJECTION_STATE.original.querySelector)) showHtmlInjectionScreen('querySelector-patched');
-                if (!sameFunction(Document.prototype.querySelectorAll, HTML_INJECTION_STATE.original.querySelectorAll)) showHtmlInjectionScreen('querySelectorAll-patched');
-                if (!sameFunction(Document.prototype.getElementById, HTML_INJECTION_STATE.original.getElementById)) showHtmlInjectionScreen('getElementById-patched');
-                if (HTML_INJECTION_STATE.original.fetch && !sameFunction(window.fetch, HTML_INJECTION_STATE.original.fetch)) showHtmlInjectionScreen('fetch-patched');
-                if (!sameFunction(Math.random, HTML_INJECTION_STATE.original.random)) showHtmlInjectionScreen('math-random-patched');
-                if (window.crypto && HTML_INJECTION_STATE.original.getRandomValues && !sameFunction(window.crypto.getRandomValues, HTML_INJECTION_STATE.original.getRandomValues)) showHtmlInjectionScreen('crypto-patched');
-
-                // Marqueurs fréquents d'userscripts/extensions quand ils fuitent dans la page.
-                if (typeof window.GM_info !== 'undefined' || typeof window.GM !== 'undefined') showHtmlInjectionScreen('gm-api-detected');
-                if (typeof window.unsafeWindow !== 'undefined') showHtmlInjectionScreen('unsafeWindow-detected');
+                // Production-safe: on ne bloque plus les prototypes généraux (fetch/querySelector/etc.)
+                // car certaines extensions normales, navigateurs et scripts publicitaires peuvent les toucher.
+                // Les vraies protections qui restent actives: serveur officiel, anti-storage connu, anti-modification visuelle des dés.
+                return true;
             }
 
             function nodeSignature(node) {
@@ -1902,68 +1887,27 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
 
             function scanForInjectedHtmlNodes() {
+                // Production-safe: ne bloque pas les éléments dynamiques normaux (Google Ads, Firebase,
+                // extensions navigateur inoffensives, iframes about:blank, etc.).
+                // Le blocage se fait sur les attaques utiles: stockage/ancien script cdBlock et modification visible des dés.
                 enforceRuntimePrototypeIntegrity();
-
-                const direct = Array.from(document.body ? document.body.children : []);
-                for (const el of direct) {
-                    if (!isAllowedAddedNode(el, 'initial')) {
-                        showHtmlInjectionScreen('unexpected-body-node-' + nodeSignature(el));
-                        return false;
-                    }
-                }
-
-                const risky = Array.from(document.querySelectorAll('script,iframe,style,object,embed'));
-                for (const el of risky) {
-                    if (!isAllowedAddedNode(el, 'initial')) {
-                        showHtmlInjectionScreen('unexpected-risky-node-' + nodeSignature(el));
-                        return false;
-                    }
-                }
-
                 return true;
             }
 
             function handleHtmlMutation(records) {
+                // Production-safe: observer doux. Il ne bloque pas le site pour une simple injection de pub/iframe.
+                // Les modifications de dés sont vérifiées par l'anti-visual-tamper juste en dessous.
                 if (isTrustedMutationWindow()) return;
-
-                for (const record of records) {
-                    if (record.type === 'childList') {
-                        for (const node of record.addedNodes) {
-                            if (!isAllowedAddedNode(node)) {
-                                showHtmlInjectionScreen('added-' + nodeSignature(node));
-                                return;
-                            }
-                        }
-                    }
-
-                    if (record.type === 'attributes') {
-                        const target = record.target;
-                        if (!target || target.nodeType !== 1) continue;
-                        const tag = String(target.tagName || '').toUpperCase();
-                        if (looksLikeInjectedMarker(target)) showHtmlInjectionScreen('marker-attribute-' + nodeSignature(target));
-                        if (['SCRIPT','IFRAME','OBJECT','EMBED'].includes(tag) && !isAllowedAddedNode(target)) {
-                            showHtmlInjectionScreen('risky-attribute-' + nodeSignature(target));
-                            return;
-                        }
-                    }
-                }
+                return true;
             }
 
             function startHtmlInjectionGuard() {
-                if (HTML_INJECTION_STATE.observerStarted || !window.MutationObserver) return;
+                if (HTML_INJECTION_STATE.observerStarted) return;
                 checkHtmlInjectionBlockState();
                 scanForInjectedHtmlNodes();
                 HTML_INJECTION_STATE.observerStarted = true;
-
-                const observer = new MutationObserver(handleHtmlMutation);
-                observer.observe(document.documentElement, {
-                    subtree: true,
-                    childList: true,
-                    attributes: true,
-                    attributeFilter: ['id', 'class', 'style', 'src', 'href', 'hidden']
-                });
-
-                setInterval(scanForInjectedHtmlNodes, HTML_INJECTION_CONFIG.CHECK_INTERVAL_MS);
+                // Pas de MutationObserver global anti-HTML en production: trop de faux positifs avec pubs/extensions.
+                // L'anti-tamper visuel garde son observer ciblé sur les dés.
             }
 
             // ════════════════════════════════════════════════════════
