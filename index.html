@@ -1627,6 +1627,9 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 SECURITY_STATE.rolling = false;
                 SECURITY_STATE.revealing = false;
                 SECURITY_STATE.lastRollAt = Date.now();
+                // Dès que le roll est officiellement fini, on reverifie vite l'affichage.
+                try { scheduleVisualIntegrityCheck(80); } catch (err) {}
+                try { setTimeout(verifyVisualIntegrity, 220); } catch (err) {}
             }
 
             function isThemeUnlocked(theme) {
@@ -1680,9 +1683,30 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 return typeof fn === 'function' && src.indexOf('[native code]') !== -1;
             }
 
+            // Capture une copie native au chargement. Si Tampermonkey a déjà patché avant nous,
+            // enforceStoragePrototypeIntegrity() bloque la page; sinon on bypass les patchs ajoutés après.
+            const STORAGE_NATIVE_API = Object.freeze({
+                setItem: Storage.prototype.setItem,
+                getItem: Storage.prototype.getItem,
+                removeItem: Storage.prototype.removeItem,
+                clear: Storage.prototype.clear
+            });
+
+            function nativeSessionSetItem(key, value) {
+                return STORAGE_NATIVE_API.setItem.call(sessionStorage, key, value);
+            }
+
+            function nativeSessionGetItem(key) {
+                return STORAGE_NATIVE_API.getItem.call(sessionStorage, key);
+            }
+
+            function nativeSessionRemoveItem(key) {
+                return STORAGE_NATIVE_API.removeItem.call(sessionStorage, key);
+            }
+
             function showStorageTamperScreen(reason) {
-                // No sticky session lock: active tampering still blocks immediately, but a clean reload can recover.
-                try { sessionStorage.removeItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY); } catch (err) {}
+                // Pas de blocage collant: si l'utilisateur désactive le script et reload, le site repart.
+                try { nativeSessionRemoveItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY); } catch (err) {}
 
                 document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:44px;font-weight:900;margin-bottom:14px;line-height:1.15;">Script de triche détecté 🛡️</div><div style="font-size:18px;opacity:.78;margin-bottom:8px;">Le site a détecté une tentative de modification du stockage local.</div><div style="font-size:14px;opacity:.45;">Désactive Tampermonkey / l’extension puis recharge la page.</div></div></div>';
                 throw new Error('Storage tamper blocked: ' + reason);
@@ -1690,39 +1714,46 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
 
             function checkStorageTamperBlockState() {
                 // Old versions stored a sticky block flag. Clear it so the site does not stay blocked after testing.
-                try { sessionStorage.removeItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY); } catch (err) {}
+                try { nativeSessionRemoveItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY); } catch (err) {}
             }
 
             function enforceStoragePrototypeIntegrity() {
-                // Bloque si le Storage natif du navigateur a été patché.
-                if (!isNativeBrowserFunction(Storage.prototype.setItem)) {
+                // Bloque si Storage est patché, même APRÈS le chargement.
+                if (!isNativeBrowserFunction(Storage.prototype.setItem) || Storage.prototype.setItem !== STORAGE_NATIVE_API.setItem) {
                     showStorageTamperScreen('storage-setItem-patched');
                 }
-                if (!isNativeBrowserFunction(Storage.prototype.getItem)) {
+                if (!isNativeBrowserFunction(Storage.prototype.getItem) || Storage.prototype.getItem !== STORAGE_NATIVE_API.getItem) {
                     showStorageTamperScreen('storage-getItem-patched');
                 }
-                if (!isNativeBrowserFunction(Storage.prototype.removeItem)) {
+                if (!isNativeBrowserFunction(Storage.prototype.removeItem) || Storage.prototype.removeItem !== STORAGE_NATIVE_API.removeItem) {
                     showStorageTamperScreen('storage-removeItem-patched');
                 }
 
                 try {
-                    const known = sessionStorage.getItem(STORAGE_TAMPER_CONFIG.KNOWN_SCAMMER_KEY);
+                    const known = nativeSessionGetItem(STORAGE_TAMPER_CONFIG.KNOWN_SCAMMER_KEY);
                     if (known !== null && known !== '') {
                         showStorageTamperScreen('known-cdblock-userscript');
                     }
                 } catch (err) {}
             }
 
+            function startStorageTamperWatch() {
+                enforceStoragePrototypeIntegrity();
+                setInterval(enforceStoragePrototypeIntegrity, 350);
+            }
+
             function secureSessionSetItem(key, value) {
+                enforceStoragePrototypeIntegrity();
                 if (key === SECURITY_CONFIG.LEGACY_ROLL_CACHE_KEY) {
                     showStorageTamperScreen('legacy-roll-cache-write-blocked');
                 }
-                sessionStorage.setItem(key, value);
+                return nativeSessionSetItem(key, value);
             }
 
             function secureSessionGetItem(key) {
+                enforceStoragePrototypeIntegrity();
                 if (key === SECURITY_CONFIG.LEGACY_ROLL_CACHE_KEY) return null;
-                return sessionStorage.getItem(key);
+                return nativeSessionGetItem(key);
             }
 
 
@@ -1916,7 +1947,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             //  Note: le résultat officiel reste celui généré par Render.
             // ════════════════════════════════════════════════════════
             const VISUAL_TAMPER_CONFIG = Object.freeze({
-                CHECK_INTERVAL_MS: 450,
+                CHECK_INTERVAL_MS: 140,
                 CHECK_DEBOUNCE_MS: 120,
                 MAX_RELOADS_BEFORE_BLOCK: 3,
                 RELOAD_WINDOW_MS: 12000,
@@ -1973,33 +2004,10 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             function handleVisualTamper(reason) {
                 securityWarn('Visual tamper detected: ' + reason);
 
-                let count = 0;
-                let firstAt = Date.now();
-                try {
-                    const oldFirstAt = Number(sessionStorage.getItem(VISUAL_TAMPER_CONFIG.TIME_KEY) || '0');
-                    const oldCount = Number(sessionStorage.getItem(VISUAL_TAMPER_CONFIG.COUNT_KEY) || '0');
-                    const now = Date.now();
-
-                    if (oldFirstAt && now - oldFirstAt < VISUAL_TAMPER_CONFIG.RELOAD_WINDOW_MS) {
-                        firstAt = oldFirstAt;
-                        count = oldCount + 1;
-                    } else {
-                        count = 1;
-                        firstAt = now;
-                    }
-
-                    sessionStorage.setItem(VISUAL_TAMPER_CONFIG.TIME_KEY, String(firstAt));
-                    sessionStorage.setItem(VISUAL_TAMPER_CONFIG.COUNT_KEY, String(count));
-                } catch (err) {
-                    count = VISUAL_TAMPER_CONFIG.MAX_RELOADS_BEFORE_BLOCK;
-                }
-
-                if (count >= VISUAL_TAMPER_CONFIG.MAX_RELOADS_BEFORE_BLOCK) {
-                    showVisualTamperScreen(reason);
-                    return;
-                }
-
-                location.reload();
+                // Version renforcée: on ne fait plus juste reload 2-3 fois.
+                // Dès qu'une couleur affichée ne correspond plus au résultat officiel,
+                // on affiche directement l'écran de détection. Pas de blocage collant.
+                showVisualTamperScreen(reason);
             }
 
             function checkVisualBlockState() {
@@ -2055,7 +2063,15 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 });
 
                 startVisualTamperObserver();
-                scheduleVisualIntegrityCheck(350);
+                scheduleVisualIntegrityCheck(120);
+
+                // Burst rapide juste après affichage/reload: les scripts visuels agissent souvent dans cette fenêtre.
+                const startedAt = Date.now();
+                (function visualBurstLoop() {
+                    if (!VISUAL_TAMPER_STATE.armed || Date.now() - startedAt > 3500) return;
+                    try { verifyVisualIntegrity(); } catch (err) { throw err; }
+                    requestAnimationFrame(visualBurstLoop);
+                })();
             }
 
             function verifyVisualIntegrity() {
@@ -2630,7 +2646,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             window.onload = async function() {
                 enforceFrontendHostLock();
                 checkStorageTamperBlockState();
-                enforceStoragePrototypeIntegrity();
+                startStorageTamperWatch();
                 checkHtmlInjectionBlockState();
                 enforceRuntimePrototypeIntegrity();
                 checkVisualBlockState();
