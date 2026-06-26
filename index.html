@@ -1328,17 +1328,6 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
         <div class="dice-container" id="diceContainer">
             <div id="combo-display"></div>
         </div>
-        <div style="color: white; font-size: 1.5em; font-weight: bold; text-align: center; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); z-index: 10; position: relative; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px;">
-            Rejoins nous sur roblox :
-
-            <a href="https://www.roblox.com/games/123295982059683/Steal-a-Glory#!/game-instances" target="_blank" style="color: #ffd700; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; text-shadow: 0 0 10px rgba(255,215,0,0.5); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                Steal a Glory !
-
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5.10515 2.15582L2.05267 18.9442L18.8411 21.9967L21.8936 5.2083L5.10515 2.15582ZM10.5186 10.3541L13.7224 10.9366L13.1399 14.1404L9.9361 13.558L10.5186 10.3541Z"/>
-                </svg>
-            </a>
-        </div>
         <button id="rollBtn" onclick="startRollAnimation()">ROLL AGAIN !</button>
         <div class="colors-info">
             <span id="colorsIntroText">Possible colors are:</span>
@@ -1390,6 +1379,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 MIN_ROLL_INTERVAL_MS: 1500,
                 SERVER_ROLL_ENDPOINT: 'https://color-dice-api.onrender.com/api/roll',
                 SERVER_TIMEOUT_MS: 900,
+                ALLOWED_FRONTEND_HOSTS: Object.freeze(['rollcolordice.com', 'www.rollcolordice.com', 'geoman0.github.io']),
                 ALLOWED_THEMES: Object.freeze(['default', 'green', 'red', 'bw', 'bronze', 'silver', 'gold']),
                 THEME_UNLOCKS: Object.freeze({
                     bronze: 10,
@@ -1568,6 +1558,22 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             function securityWarn(message) {
                 SECURITY_STATE.tamperScore++;
                 console.warn('[ColorDice Security] ' + message);
+            }
+
+            function isAllowedFrontendHost() {
+                const host = String(location.hostname || '').toLowerCase();
+                return SECURITY_CONFIG.ALLOWED_FRONTEND_HOSTS.includes(host);
+            }
+
+            function showUnauthorizedHostScreen() {
+                document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:46px;font-weight:900;margin-bottom:14px;line-height:1.15;">Bien tenté, t\'auras pas le source code ptit reuf 😏</div><div style="font-size:18px;opacity:.75;">Ce site doit être lancé depuis le vrai nom de domaine.</div></div></div>';
+                throw new Error('Unauthorized host blocked: ' + location.href);
+            }
+
+            function enforceFrontendHostLock() {
+                if (!isAllowedFrontendHost()) {
+                    showUnauthorizedHostScreen();
+                }
             }
 
             function saveDisplayedRoll(results, animateAfterReload = false) {
@@ -2030,6 +2036,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 }, SECURITY_CONFIG.MIN_ROLL_INTERVAL_MS);
             }
             window.onload = async function() {
+                enforceFrontendHostLock();
                 buildDiceOptions();
                 generateDice();
                 updateVolUI();
