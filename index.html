@@ -16,6 +16,41 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            (() => {
+                'use strict';
+                const blockedCombo = (event) => {
+                    const key = String(event.key || '').toLowerCase();
+                    const code = String(event.code || '').toLowerCase();
+                    const ctrl = event.ctrlKey || event.metaKey;
+                    const shift = event.shiftKey;
+
+                    return event.key === 'F12'
+                        || code === 'f12'
+                        || (ctrl && key === 'u')
+                        || (ctrl && key === 's')
+                        || (ctrl && shift && ['i', 'j', 'c', 'k'].includes(key));
+                };
+
+                const stop = (event) => {
+                    if (!blockedCombo(event)) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    return false;
+                };
+
+                document.addEventListener('keydown', stop, true);
+                document.addEventListener('keyup', stop, true);
+                document.addEventListener('keypress', stop, true);
+                document.addEventListener('contextmenu', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return false;
+                }, true);
+                document.addEventListener('dragstart', (event) => event.preventDefault(), true);
+            })();
+        </script>
         <!-- Security hardening: non-visual browser/privacy protections. Real anti-cheat must still be enforced server-side. -->
         <meta name="referrer" content="strict-origin-when-cross-origin">
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -139,6 +174,12 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
         <style>
             *,*::before,*::after {
                 box-sizing: border-box
+            }
+
+            html, body {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-touch-callout: none
             }
 
             body {
@@ -654,7 +695,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 box-shadow: 0 10px 30px rgba(0,0,0,0.4),0 0 30px var(--die-glow,rgba(255,255,255,0.5)),0 0 60px var(--die-glow,rgba(255,255,255,0.2)),inset 0 2px 0 rgba(255,255,255,0.35),inset 0 -2px 0 rgba(0,0,0,0.2)
             }
 
-            button#rollBtn {
+            button#cdActionK9P2 {
                 position: relative;
                 background: linear-gradient(135deg,#ffd700,#ffaa00);
                 color: white;
@@ -685,7 +726,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 }
             }
 
-            button#rollBtn::before {
+            button#cdActionK9P2::before {
                 content: '';
                 position: absolute;
                 top: 0;
@@ -710,18 +751,18 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 }
             }
 
-            button#rollBtn:hover {
+            button#cdActionK9P2:hover {
                 transform: translateY(-3px) scale(1.03);
                 box-shadow: 0 10px 30px rgba(0,0,0,0.35),0 0 25px rgba(255,215,0,0.4),inset 0 2px 0 rgba(255,255,255,0.3);
                 animation: none
             }
 
-            button#rollBtn:active:not(:disabled) {
+            button#cdActionK9P2:active:not(:disabled) {
                 transform: translateY(3px) scale(0.96);
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2),inset 0 2px 0 rgba(255,255,255,0.2)
             }
 
-            button#rollBtn:disabled {
+            button#cdActionK9P2:disabled {
                 background: linear-gradient(135deg,#bdc3c7,#95a5a6);
                 text-shadow: none;
                 border-color: rgba(255,255,255,0.4);
@@ -731,7 +772,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2)
             }
 
-            button#rollBtn:disabled::before {
+            button#cdActionK9P2:disabled::before {
                 display: none
             }
 
@@ -1321,14 +1362,14 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             <div class="select-group">
                 <span class="select-label" id="diceLabel">🎲 Number of Dice</span>
                 <div class="select-wrapper">
-                    <select id="diceCountSelect" onchange="generateDice()"></select>
+                    <select id="diceCountSelect" onchange="handleDiceCountChange()"></select>
                 </div>
             </div>
         </div>
         <div class="dice-container" id="diceContainer">
             <div id="combo-display"></div>
         </div>
-        <button id="rollBtn" onclick="startRollAnimation()">ROLL AGAIN !</button>
+        <button id="cdActionK9P2" onclick="cdLaunchR7Q()">ROLL AGAIN !</button>
         <div class="colors-info">
             <span id="colorsIntroText">Possible colors are:</span>
             <span style="color:#ff6666;font-weight:900;" id="colorRed">Red</span>
@@ -1379,7 +1420,9 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 MIN_ROLL_INTERVAL_MS: 1500,
                 SERVER_ROLL_ENDPOINT: 'https://color-dice-api.onrender.com/api/roll',
                 SERVER_TIMEOUT_MS: 900,
-                ALLOWED_FRONTEND_HOSTS: Object.freeze(['colordice.fr', 'www.colordice.fr', 'rollcolordice.com', 'www.rollcolordice.com', 'geoman0.github.io']),
+                ROLL_CACHE_KEY: ['__','r','8','k','_','7f','19','_','cache'].join(''),
+                LEGACY_ROLL_CACHE_KEY: ['color','Dice','Last','Server','Roll'].join(''),
+                ALLOWED_FRONTEND_HOSTS: Object.freeze(['colordice.fr', 'www.colordice.fr', 'rollcolordice.com', 'www.rollcolordice.com', 'geoman0.github.io', 'localhost', '127.0.0.1', '']),
                 ALLOWED_THEMES: Object.freeze(['default', 'green', 'red', 'bw', 'bronze', 'silver', 'gold']),
                 THEME_UNLOCKS: Object.freeze({
                     bronze: 10,
@@ -1562,6 +1605,8 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
 
             function isAllowedFrontendHost() {
                 const host = String(location.hostname || '').toLowerCase();
+                if (location.protocol === 'file:') return true;
+                if (host === 'localhost' || host === '127.0.0.1' || host === '') return true;
                 return SECURITY_CONFIG.ALLOWED_FRONTEND_HOSTS.includes(host);
             }
 
@@ -1576,21 +1621,563 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 }
             }
 
+
+            // ════════════════════════════════════════════════════════
+            //  ANTI STORAGE TAMPER
+            //  Counter les modifications du stockage pendant le refresh.
+            // ════════════════════════════════════════════════════════
+            const STORAGE_TAMPER_CONFIG = Object.freeze({
+                BLOCK_KEY: ['__','s','t','g','_','lock','_','29'].join(''),
+                KNOWN_SCAMMER_KEY: ['c','d','Block'].join('')
+            });
+
+            function functionSource(fn) {
+                try {
+                    return Function.prototype.toString.call(fn);
+                } catch (err) {
+                    return '';
+                }
+            }
+
+            function isNativeBrowserFunction(fn) {
+                const src = functionSource(fn);
+                return typeof fn === 'function' && src.indexOf('[native code]') !== -1;
+            }
+
+            function showStorageTamperScreen(reason) {
+                try {
+                    sessionStorage.setItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY, '1');
+                } catch (err) {}
+
+                document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:44px;font-weight:900;margin-bottom:14px;line-height:1.15;">Script de triche détecté 🛡️</div><div style="font-size:18px;opacity:.78;margin-bottom:8px;">Le site a détecté une tentative de modification du stockage local.</div><div style="font-size:14px;opacity:.45;">Désactive Tampermonkey / l’extension puis recharge la page.</div></div></div>';
+                throw new Error('Storage tamper blocked: ' + reason);
+            }
+
+            function checkStorageTamperBlockState() {
+                try {
+                    if (sessionStorage.getItem(STORAGE_TAMPER_CONFIG.BLOCK_KEY) === '1') {
+                        showStorageTamperScreen('blocked-session');
+                    }
+                } catch (err) {}
+            }
+
+            function enforceStoragePrototypeIntegrity() {
+                // Bloque si le Storage natif du navigateur a été patché.
+                if (!isNativeBrowserFunction(Storage.prototype.setItem)) {
+                    showStorageTamperScreen('storage-setItem-patched');
+                }
+                if (!isNativeBrowserFunction(Storage.prototype.getItem)) {
+                    showStorageTamperScreen('storage-getItem-patched');
+                }
+                if (!isNativeBrowserFunction(Storage.prototype.removeItem)) {
+                    showStorageTamperScreen('storage-removeItem-patched');
+                }
+
+                try {
+                    const known = sessionStorage.getItem(STORAGE_TAMPER_CONFIG.KNOWN_SCAMMER_KEY);
+                    if (known !== null && known !== '') {
+                        showStorageTamperScreen('known-cdblock-userscript');
+                    }
+                } catch (err) {}
+            }
+
+            function secureSessionSetItem(key, value) {
+                if (key === SECURITY_CONFIG.LEGACY_ROLL_CACHE_KEY) {
+                    showStorageTamperScreen('legacy-roll-cache-write-blocked');
+                }
+                sessionStorage.setItem(key, value);
+            }
+
+            function secureSessionGetItem(key) {
+                if (key === SECURITY_CONFIG.LEGACY_ROLL_CACHE_KEY) return null;
+                return sessionStorage.getItem(key);
+            }
+
+
+
+            // ════════════════════════════════════════════════════════
+            //  ANTI HTML / SCRIPT INJECTION
+            //  Bloque les ajouts invisibles dans le DOM, les scripts/style/iframe
+            //  suspects et les patchs de prototypes utilisés par les userscripts.
+            // ════════════════════════════════════════════════════════
+            const HTML_INJECTION_CONFIG = Object.freeze({
+                BLOCK_KEY: ['__','h','t','m','l','_','lock','_','51'].join(''),
+                CHECK_INTERVAL_MS: 650,
+                TRUSTED_MUTATION_MS: 550,
+                ALLOWED_SCRIPT_HOSTS: Object.freeze([
+                    'pagead2.googlesyndication.com',
+                    'googleads.g.doubleclick.net',
+                    'www.googletagservices.com',
+                    'www.gstatic.com',
+                    'www.googleapis.com',
+                    'fonts.googleapis.com',
+                    'fonts.gstatic.com'
+                ])
+            });
+
+            const HTML_INJECTION_STATE = {
+                observerStarted: false,
+                trustedUntil: 0,
+                original: Object.freeze({
+                    addEventListener: EventTarget.prototype.addEventListener,
+                    removeEventListener: EventTarget.prototype.removeEventListener,
+                    appendChild: Node.prototype.appendChild,
+                    insertBefore: Node.prototype.insertBefore,
+                    replaceChild: Node.prototype.replaceChild,
+                    removeChild: Node.prototype.removeChild,
+                    setAttribute: Element.prototype.setAttribute,
+                    removeAttribute: Element.prototype.removeAttribute,
+                    querySelector: Document.prototype.querySelector,
+                    querySelectorAll: Document.prototype.querySelectorAll,
+                    getElementById: Document.prototype.getElementById,
+                    fetch: window.fetch,
+                    random: Math.random,
+                    getRandomValues: window.crypto && window.crypto.getRandomValues
+                })
+            };
+
+            function isTrustedMutationWindow() {
+                return Date.now() < HTML_INJECTION_STATE.trustedUntil;
+            }
+
+            function trustAppDomMutation(ms) {
+                HTML_INJECTION_STATE.trustedUntil = Math.max(
+                    HTML_INJECTION_STATE.trustedUntil,
+                    Date.now() + (Number(ms) || HTML_INJECTION_CONFIG.TRUSTED_MUTATION_MS)
+                );
+            }
+
+            function showHtmlInjectionScreen(reason) {
+                try {
+                    sessionStorage.setItem(HTML_INJECTION_CONFIG.BLOCK_KEY, '1');
+                } catch (err) {}
+
+                document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:44px;font-weight:900;margin-bottom:14px;line-height:1.15;">Script injecté détecté 🧱</div><div style="font-size:18px;opacity:.78;margin-bottom:8px;">Le site a détecté une injection ou une modification invisible du HTML.</div><div style="font-size:14px;opacity:.45;">Désactive Tampermonkey / l’extension puis recharge la page.</div></div></div>';
+                throw new Error('HTML/script injection blocked: ' + reason);
+            }
+
+            function checkHtmlInjectionBlockState() {
+                try {
+                    if (sessionStorage.getItem(HTML_INJECTION_CONFIG.BLOCK_KEY) === '1') {
+                        showHtmlInjectionScreen('blocked-session');
+                    }
+                } catch (err) {}
+            }
+
+            function sameFunction(a, b) {
+                return a === b;
+            }
+
+            function enforceRuntimePrototypeIntegrity() {
+                // Si un userscript fort remplace les primitives de DOM/API, on bloque.
+                if (!sameFunction(EventTarget.prototype.addEventListener, HTML_INJECTION_STATE.original.addEventListener)) showHtmlInjectionScreen('addEventListener-patched');
+                if (!sameFunction(EventTarget.prototype.removeEventListener, HTML_INJECTION_STATE.original.removeEventListener)) showHtmlInjectionScreen('removeEventListener-patched');
+                if (!sameFunction(Node.prototype.appendChild, HTML_INJECTION_STATE.original.appendChild)) showHtmlInjectionScreen('appendChild-patched');
+                if (!sameFunction(Node.prototype.insertBefore, HTML_INJECTION_STATE.original.insertBefore)) showHtmlInjectionScreen('insertBefore-patched');
+                if (!sameFunction(Node.prototype.replaceChild, HTML_INJECTION_STATE.original.replaceChild)) showHtmlInjectionScreen('replaceChild-patched');
+                if (!sameFunction(Node.prototype.removeChild, HTML_INJECTION_STATE.original.removeChild)) showHtmlInjectionScreen('removeChild-patched');
+                if (!sameFunction(Element.prototype.setAttribute, HTML_INJECTION_STATE.original.setAttribute)) showHtmlInjectionScreen('setAttribute-patched');
+                if (!sameFunction(Element.prototype.removeAttribute, HTML_INJECTION_STATE.original.removeAttribute)) showHtmlInjectionScreen('removeAttribute-patched');
+                if (!sameFunction(Document.prototype.querySelector, HTML_INJECTION_STATE.original.querySelector)) showHtmlInjectionScreen('querySelector-patched');
+                if (!sameFunction(Document.prototype.querySelectorAll, HTML_INJECTION_STATE.original.querySelectorAll)) showHtmlInjectionScreen('querySelectorAll-patched');
+                if (!sameFunction(Document.prototype.getElementById, HTML_INJECTION_STATE.original.getElementById)) showHtmlInjectionScreen('getElementById-patched');
+                if (HTML_INJECTION_STATE.original.fetch && !sameFunction(window.fetch, HTML_INJECTION_STATE.original.fetch)) showHtmlInjectionScreen('fetch-patched');
+                if (!sameFunction(Math.random, HTML_INJECTION_STATE.original.random)) showHtmlInjectionScreen('math-random-patched');
+                if (window.crypto && HTML_INJECTION_STATE.original.getRandomValues && !sameFunction(window.crypto.getRandomValues, HTML_INJECTION_STATE.original.getRandomValues)) showHtmlInjectionScreen('crypto-patched');
+
+                // Marqueurs fréquents d'userscripts/extensions quand ils fuitent dans la page.
+                if (typeof window.GM_info !== 'undefined' || typeof window.GM !== 'undefined') showHtmlInjectionScreen('gm-api-detected');
+                if (typeof window.unsafeWindow !== 'undefined') showHtmlInjectionScreen('unsafeWindow-detected');
+            }
+
+            function nodeSignature(node) {
+                if (!node || node.nodeType !== 1) return 'non-element';
+                return String(node.tagName || 'el').toLowerCase()
+                    + (node.id ? '#' + node.id : '')
+                    + (node.className && typeof node.className === 'string' ? '.' + node.className.trim().replace(/\s+/g, '.') : '');
+            }
+
+            function urlHost(value) {
+                try {
+                    return new URL(String(value || ''), location.href).hostname.toLowerCase();
+                } catch (err) {
+                    return '';
+                }
+            }
+
+            function hasAllowedExternalHost(el) {
+                if (!el || el.nodeType !== 1) return false;
+                const src = el.getAttribute('src') || el.getAttribute('href') || '';
+                if (!src) return false;
+                const host = urlHost(src);
+                return HTML_INJECTION_CONFIG.ALLOWED_SCRIPT_HOSTS.includes(host)
+                    || host.endsWith('.googlesyndication.com')
+                    || host.endsWith('.google.com')
+                    || host.endsWith('.gstatic.com')
+                    || host.endsWith('.doubleclick.net');
+            }
+
+            function isInsideAllowedDynamicZone(el) {
+                return !!(el && el.closest && el.closest('#diceContainer,#historyContent,#particles,.hist-summary,.hist-seq,.ad-space,.adsbygoogle,.lang-switcher'));
+            }
+
+            function isKnownStaticDirectBodyChild(el) {
+                if (!el || el.parentElement !== document.body) return false;
+                if (el.id && ['particles','volumeControl','mainH1','diceContainer','cdActionK9P2','historyPanel','joinDiscordEl'].includes(el.id)) return true;
+                if (el.classList && (
+                    el.classList.contains('ad-space') ||
+                    el.classList.contains('header-right') ||
+                    el.classList.contains('controls-top') ||
+                    el.classList.contains('colors-info') ||
+                    el.classList.contains('watermark') ||
+                    el.classList.contains('join-discord') ||
+                    el.classList.contains('info-section') ||
+                    el.classList.contains('site-footer') ||
+                    el.classList.contains('lang-switcher')
+                )) return true;
+                return false;
+            }
+
+            function looksLikeInjectedMarker(el) {
+                if (!el || el.nodeType !== 1) return false;
+                const sig = (String(el.id || '') + ' ' + String(el.className || '') + ' ' + String(el.getAttribute('name') || '')).toLowerCase();
+                return /tamper|violentmonkey|userscript|greasemonkey|extension|inject|cheat|hack|cdblock|blocktest|tm\s*inject/.test(sig);
+            }
+
+            function isAllowedAddedNode(node, mode = 'live') {
+                if (!node || node.nodeType !== 1) return true;
+                const el = node;
+                const tag = String(el.tagName || '').toUpperCase();
+
+                if (looksLikeInjectedMarker(el)) return false;
+
+                // Les textes et éléments créés par l'app dans ses conteneurs normaux sont autorisés.
+                if (isInsideAllowedDynamicZone(el)) return true;
+                if (isKnownStaticDirectBodyChild(el)) return true;
+
+                // Les scripts inline déjà présents dans le HTML initial sont autorisés.
+                // Tout script inline ajouté après le démarrage du guard est bloqué par le MutationObserver.
+                if (mode === 'initial' && tag === 'SCRIPT' && !el.getAttribute('src')) return true;
+                if (mode === 'initial' && tag === 'STYLE' && !el.getAttribute('src')) return true;
+
+                // Google Ads / services Google autorisés uniquement par host connu.
+                if (['SCRIPT','IFRAME','LINK','IMG'].includes(tag) && hasAllowedExternalHost(el)) return true;
+                if (tag === 'INS' && el.classList.contains('adsbygoogle')) return true;
+
+                // Aucun script/style/iframe inconnu.
+                if (['SCRIPT','STYLE','IFRAME','OBJECT','EMBED'].includes(tag)) return false;
+
+                // Un node ajouté directement dans body/html/head en dehors de nos zones = injection.
+                if (el.parentElement === document.body || el.parentElement === document.documentElement || el.parentElement === document.head) return false;
+
+                return true;
+            }
+
+            function scanForInjectedHtmlNodes() {
+                enforceRuntimePrototypeIntegrity();
+
+                const direct = Array.from(document.body ? document.body.children : []);
+                for (const el of direct) {
+                    if (!isAllowedAddedNode(el, 'initial')) {
+                        showHtmlInjectionScreen('unexpected-body-node-' + nodeSignature(el));
+                        return false;
+                    }
+                }
+
+                const risky = Array.from(document.querySelectorAll('script,iframe,style,object,embed'));
+                for (const el of risky) {
+                    if (!isAllowedAddedNode(el, 'initial')) {
+                        showHtmlInjectionScreen('unexpected-risky-node-' + nodeSignature(el));
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            function handleHtmlMutation(records) {
+                if (isTrustedMutationWindow()) return;
+
+                for (const record of records) {
+                    if (record.type === 'childList') {
+                        for (const node of record.addedNodes) {
+                            if (!isAllowedAddedNode(node)) {
+                                showHtmlInjectionScreen('added-' + nodeSignature(node));
+                                return;
+                            }
+                        }
+                    }
+
+                    if (record.type === 'attributes') {
+                        const target = record.target;
+                        if (!target || target.nodeType !== 1) continue;
+                        const tag = String(target.tagName || '').toUpperCase();
+                        if (looksLikeInjectedMarker(target)) showHtmlInjectionScreen('marker-attribute-' + nodeSignature(target));
+                        if (['SCRIPT','IFRAME','OBJECT','EMBED'].includes(tag) && !isAllowedAddedNode(target)) {
+                            showHtmlInjectionScreen('risky-attribute-' + nodeSignature(target));
+                            return;
+                        }
+                    }
+                }
+            }
+
+            function startHtmlInjectionGuard() {
+                if (HTML_INJECTION_STATE.observerStarted || !window.MutationObserver) return;
+                checkHtmlInjectionBlockState();
+                scanForInjectedHtmlNodes();
+                HTML_INJECTION_STATE.observerStarted = true;
+
+                const observer = new MutationObserver(handleHtmlMutation);
+                observer.observe(document.documentElement, {
+                    subtree: true,
+                    childList: true,
+                    attributes: true,
+                    attributeFilter: ['id', 'class', 'style', 'src', 'href', 'hidden']
+                });
+
+                setInterval(scanForInjectedHtmlNodes, HTML_INJECTION_CONFIG.CHECK_INTERVAL_MS);
+            }
+
+            // ════════════════════════════════════════════════════════
+            //  ANTI-VISUAL TAMPER
+            //  Counter les scripts/extensions qui changent juste les couleurs à l'écran.
+            //  Note: le résultat officiel reste celui généré par Render.
+            // ════════════════════════════════════════════════════════
+            const VISUAL_TAMPER_CONFIG = Object.freeze({
+                CHECK_INTERVAL_MS: 450,
+                CHECK_DEBOUNCE_MS: 120,
+                MAX_RELOADS_BEFORE_BLOCK: 3,
+                RELOAD_WINDOW_MS: 12000,
+                BLOCK_KEY: ['__','v','i','s','_','lock','_','73'].join(''),
+                COUNT_KEY: ['__','v','i','s','_','count','_','73'].join(''),
+                TIME_KEY: ['__','v','i','s','_','time','_','73'].join('')
+            });
+
+            const VISUAL_TAMPER_STATE = {
+                armed: false,
+                observerStarted: false,
+                timer: 0,
+                expected: []
+            };
+
+            function normalizeCssColorToRgb(value) {
+                value = String(value || '').trim().toLowerCase();
+                if (!value || value === 'transparent' || value === 'rgba(0, 0, 0, 0)') return '';
+
+                const hex = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+                if (hex) {
+                    let h = hex[1];
+                    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+                    const n = parseInt(h, 16);
+                    return 'rgb(' + ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ')';
+                }
+
+                const rgb = value.match(/^rgba?\(([^)]+)\)$/i);
+                if (!rgb) return value;
+
+                const parts = rgb[1].split(',').map(p => p.trim());
+                if (parts.length < 3) return value;
+
+                const r = Math.round(parseFloat(parts[0]));
+                const g = Math.round(parseFloat(parts[1]));
+                const b = Math.round(parseFloat(parts[2]));
+                const a = parts.length >= 4 ? parseFloat(parts[3]) : 1;
+                if (a === 0) return '';
+                return 'rgb(' + r + ', ' + g + ', ' + b + ')';
+            }
+
+            function expectedRgbForColorIndex(index) {
+                return normalizeCssColorToRgb(COLORS[index]);
+            }
+
+            function showVisualTamperScreen(reason) {
+                try {
+                    sessionStorage.setItem(VISUAL_TAMPER_CONFIG.BLOCK_KEY, '1');
+                } catch (err) {}
+
+                document.body.innerHTML = '<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;background:#050505;color:#fff;font-family:Arial,sans-serif;padding:30px;box-sizing:border-box;"><div><div style="font-size:44px;font-weight:900;margin-bottom:14px;line-height:1.15;">Affichage modifié détecté 👀</div><div style="font-size:18px;opacity:.78;margin-bottom:8px;">Le site a détecté une modification visuelle des couleurs.</div><div style="font-size:14px;opacity:.45;">Reload la page sans script/extension pour continuer.</div></div></div>';
+                throw new Error('Visual tamper blocked: ' + reason);
+            }
+
+            function handleVisualTamper(reason) {
+                securityWarn('Visual tamper detected: ' + reason);
+
+                let count = 0;
+                let firstAt = Date.now();
+                try {
+                    const oldFirstAt = Number(sessionStorage.getItem(VISUAL_TAMPER_CONFIG.TIME_KEY) || '0');
+                    const oldCount = Number(sessionStorage.getItem(VISUAL_TAMPER_CONFIG.COUNT_KEY) || '0');
+                    const now = Date.now();
+
+                    if (oldFirstAt && now - oldFirstAt < VISUAL_TAMPER_CONFIG.RELOAD_WINDOW_MS) {
+                        firstAt = oldFirstAt;
+                        count = oldCount + 1;
+                    } else {
+                        count = 1;
+                        firstAt = now;
+                    }
+
+                    sessionStorage.setItem(VISUAL_TAMPER_CONFIG.TIME_KEY, String(firstAt));
+                    sessionStorage.setItem(VISUAL_TAMPER_CONFIG.COUNT_KEY, String(count));
+                } catch (err) {
+                    count = VISUAL_TAMPER_CONFIG.MAX_RELOADS_BEFORE_BLOCK;
+                }
+
+                if (count >= VISUAL_TAMPER_CONFIG.MAX_RELOADS_BEFORE_BLOCK) {
+                    showVisualTamperScreen(reason);
+                    return;
+                }
+
+                location.reload();
+            }
+
+            function checkVisualBlockState() {
+                try {
+                    if (sessionStorage.getItem(VISUAL_TAMPER_CONFIG.BLOCK_KEY) === '1') {
+                        showVisualTamperScreen('blocked-session');
+                    }
+                } catch (err) {}
+            }
+
+            function markDieAsOfficial(die, colorIndex) {
+                if (!die || !Number.isInteger(colorIndex)) return;
+                die.dataset.officialColorIndex = String(colorIndex);
+                die.dataset.officialRgb = expectedRgbForColorIndex(colorIndex);
+            }
+
+            function hasSuspiciousVisualFilter(el) {
+                let cur = el;
+                while (cur && cur.nodeType === 1) {
+                    const cs = getComputedStyle(cur);
+                    const filter = String(cs.filter || 'none').trim().toLowerCase();
+                    const backdrop = String(cs.backdropFilter || cs.webkitBackdropFilter || 'none').trim().toLowerCase();
+                    const blend = String(cs.mixBlendMode || 'normal').trim().toLowerCase();
+                    const opacity = parseFloat(cs.opacity || '1');
+
+                    if (filter && filter !== 'none') return true;
+                    if (backdrop && backdrop !== 'none') return true;
+                    if (blend && blend !== 'normal') return true;
+                    if (!Number.isNaN(opacity) && opacity < 0.45) return true;
+
+                    cur = cur.parentElement;
+                }
+                return false;
+            }
+
+            function isDieCovered(die) {
+                const rect = die.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) return true;
+
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                const topEl = document.elementFromPoint(x, y);
+                return !!(topEl && topEl !== die && !die.contains(topEl) && !topEl.closest('.die'));
+            }
+
+            function armVisualTamperGuard(results) {
+                VISUAL_TAMPER_STATE.expected = Array.isArray(results) ? results.slice() : [];
+                VISUAL_TAMPER_STATE.armed = VISUAL_TAMPER_STATE.expected.length > 0;
+
+                document.querySelectorAll('.die').forEach((die, i) => {
+                    markDieAsOfficial(die, VISUAL_TAMPER_STATE.expected[i]);
+                });
+
+                startVisualTamperObserver();
+                scheduleVisualIntegrityCheck(350);
+            }
+
+            function verifyVisualIntegrity() {
+                if (!VISUAL_TAMPER_STATE.armed) return true;
+                if (SECURITY_STATE.rolling || SECURITY_STATE.revealing) return true;
+                if (!lastSpin || !lastSpin.length) return true;
+
+                const dies = Array.from(document.querySelectorAll('.die'));
+                if (dies.length !== lastSpin.length) {
+                    handleVisualTamper('dice-count-mismatch');
+                    return false;
+                }
+
+                for (let i = 0; i < dies.length; i++) {
+                    const die = dies[i];
+                    const expectedIndex = lastSpin[i];
+                    const expectedRgb = expectedRgbForColorIndex(expectedIndex);
+                    const cs = getComputedStyle(die);
+                    const actualRgb = normalizeCssColorToRgb(cs.backgroundColor);
+
+                    if (!die.classList.contains('colored')) {
+                        handleVisualTamper('missing-colored-class-' + i);
+                        return false;
+                    }
+
+                    if (die.dataset.officialColorIndex !== String(expectedIndex)) {
+                        handleVisualTamper('official-index-modified-' + i);
+                        return false;
+                    }
+
+                    if (actualRgb !== expectedRgb) {
+                        handleVisualTamper('color-mismatch-' + i + '-' + actualRgb + '-expected-' + expectedRgb);
+                        return false;
+                    }
+
+                    if (cs.display === 'none' || cs.visibility === 'hidden') {
+                        handleVisualTamper('hidden-die-' + i);
+                        return false;
+                    }
+
+                    if (hasSuspiciousVisualFilter(die)) {
+                        handleVisualTamper('visual-filter-' + i);
+                        return false;
+                    }
+
+                    if (isDieCovered(die)) {
+                        handleVisualTamper('covered-die-' + i);
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            function scheduleVisualIntegrityCheck(delay) {
+                clearTimeout(VISUAL_TAMPER_STATE.timer);
+                VISUAL_TAMPER_STATE.timer = setTimeout(verifyVisualIntegrity, Number(delay) || VISUAL_TAMPER_CONFIG.CHECK_DEBOUNCE_MS);
+            }
+
+            function startVisualTamperObserver() {
+                if (VISUAL_TAMPER_STATE.observerStarted || !window.MutationObserver) return;
+                VISUAL_TAMPER_STATE.observerStarted = true;
+
+                const observer = new MutationObserver(() => {
+                    if (isTrustedMutationWindow()) return;
+                    scheduleVisualIntegrityCheck();
+                });
+
+                observer.observe(document.documentElement, {
+                    subtree: true,
+                    childList: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class', 'hidden', 'src']
+                });
+
+                setInterval(verifyVisualIntegrity, VISUAL_TAMPER_CONFIG.CHECK_INTERVAL_MS);
+            }
+
             function saveDisplayedRoll(results, animateAfterReload = false) {
                 try {
-                    sessionStorage.setItem('colorDiceLastServerRoll', JSON.stringify({
+                    secureSessionSetItem(SECURITY_CONFIG.ROLL_CACHE_KEY, JSON.stringify({
                         results: results,
                         count: results.length,
                         spinNumber: spinNumber,
                         savedAt: Date.now(),
                         animateAfterReload: !!animateAfterReload
                     }));
+                    try { sessionStorage.removeItem(SECURITY_CONFIG.LEGACY_ROLL_CACHE_KEY); } catch (cleanupErr) {}
                 } catch (err) {}
             }
 
             function loadSavedDisplayedRoll() {
                 try {
-                    const raw = sessionStorage.getItem('colorDiceLastServerRoll');
+                    const raw = secureSessionGetItem(SECURITY_CONFIG.ROLL_CACHE_KEY);
                     if (!raw) return null;
                     const parsed = JSON.parse(raw);
                     const count = clampDiceCount(parsed.count);
@@ -1625,9 +2212,11 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     die.classList.add('colored');
                     die.style.background = color;
                     die.style.setProperty('--die-glow', glow);
+                    markDieAsOfficial(die, ci);
                 });
 
                 renderHistory();
+                armVisualTamperGuard(lastSpin);
             }
 
             function applySpinRevealAnimation(results, savedSpinNumber) {
@@ -1635,7 +2224,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 if (countSelect) countSelect.value = String(count);
                 generateDice();
 
-                const btn = document.getElementById('rollBtn');
+                const btn = document.getElementById('cdActionK9P2');
                 const dies = document.querySelectorAll('.die');
                 const comboEl = document.getElementById('combo-display');
                 lastSpin = results.slice(0, dies.length);
@@ -1685,6 +2274,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     setTimeout(() => {
                         if (btn) btn.disabled = false;
                         finishSecureRoll();
+                        armVisualTamperGuard(lastSpin);
                     }, td);
                 }, 150);
             }
@@ -1780,6 +2370,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
 
             function buildDiceOptions() {
+                trustAppDomMutation(700);
                 const T = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
                 const cur = countSelect.value || '3';
                 countSelect.innerHTML = '';
@@ -1793,6 +2384,11 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 }
             }
             function generateDice() {
+                trustAppDomMutation(900);
+                if (typeof VISUAL_TAMPER_STATE !== 'undefined') {
+                    VISUAL_TAMPER_STATE.armed = false;
+                }
+
                 const container = document.getElementById('diceContainer');
                 const comboEl = document.getElementById('combo-display');
                 if (!container || !comboEl) return;
@@ -1814,6 +2410,29 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     w.appendChild(d);
                     container.appendChild(w);
                 }
+            }
+
+            function handleDiceCountChange() {
+                if (SECURITY_STATE.rolling || SECURITY_STATE.revealing) {
+                    if (countSelect) countSelect.value = String(lastSpin && lastSpin.length ? lastSpin.length : 3);
+                    return;
+                }
+
+                trustAppDomMutation(1200);
+                clearTimeout(spamTimeout);
+                comboCount = 0;
+                const comboEl = document.getElementById('combo-display');
+                if (comboEl) {
+                    comboEl.classList.remove('show-combo');
+                    comboEl.style.opacity = '0';
+                    comboEl.textContent = '';
+                }
+
+                const count = getSafeDiceCount();
+                const newSpin = getLocalSecureRoll(count);
+                spinNumber = Math.max(1, spinNumber || 1);
+                applySpinInstant(newSpin, spinNumber);
+                saveDisplayedRoll(newSpin, false);
             }
             function changeTheme() {
                 const select = document.getElementById('themeSelect');
@@ -1839,6 +2458,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 document.getElementById('historyPanel').classList.toggle('open');
             }
             function renderHistory() {
+                trustAppDomMutation(700);
                 const T = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
                 const el = document.getElementById('historyContent');
                 if (!el) return;
@@ -1942,10 +2562,10 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 requestAnimationFrame(animateParticles);
             }
             animateParticles();
-            function startRollAnimation() {
+            function cdLaunchR7Q() {
                 if (!canStartSecureRoll()) return;
 
-                const btn = document.getElementById('rollBtn');
+                const btn = document.getElementById('cdActionK9P2');
                 let dies = document.querySelectorAll('.die');
                 const comboEl = document.getElementById('combo-display');
                 const safeDiceCount = getSafeDiceCount();
@@ -2037,11 +2657,18 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             }
             window.onload = async function() {
                 enforceFrontendHostLock();
+                checkStorageTamperBlockState();
+                enforceStoragePrototypeIntegrity();
+                checkHtmlInjectionBlockState();
+                enforceRuntimePrototypeIntegrity();
+                checkVisualBlockState();
+                trustAppDomMutation(1800);
                 buildDiceOptions();
                 generateDice();
                 updateVolUI();
                 await showFirstRollOnLoad();
                 renderHistory();
+                startHtmlInjectionGuard();
             }
             ;
         </script>
@@ -2270,10 +2897,10 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             };
             const app = initializeApp(firebaseConfig);
             const db = getDatabase(app);
-            let deviceId = localStorage.getItem('colorDiceDeviceID');
+            let deviceId = localStorage.getItem(['__','device','_','cd','_','9'].join(''));
             if (!deviceId) {
                 deviceId = 'user_' + (window.secureRandomHex ? window.secureRandomHex(9) : Date.now().toString(36));
-                localStorage.setItem('colorDiceDeviceID', deviceId);
+                localStorage.setItem(['__','device','_','cd','_','9'].join(''), deviceId);
             }
             const myDeviceRef = ref(db, `online_users/${deviceId}`);
             const connectedRef = ref(db, ".info/connected");
@@ -2304,7 +2931,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             const TRANSLATIONS = {
                 en: {
                     h1: 'COLOR DICE – ROLL COLOR DICE',
-                    rollBtn: 'ROLL AGAIN !',
+                    cdActionK9P2: 'ROLL AGAIN !',
                     themeLabel: '🎨 Theme',
                     diceLabel: '🎲 Number of Dice',
                     online: 'online',
@@ -2372,7 +2999,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 fr: {
                     h1: 'DÉS COULEUR – LANCEZ VOS DÉS COULEUR',
-                    rollBtn: 'LANCER ENCORE !',
+                    cdActionK9P2: 'LANCER ENCORE !',
                     themeLabel: '🎨 Thème',
                     diceLabel: '🎲 Nombre de Dés',
                     online: 'en ligne',
@@ -2440,7 +3067,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 es: {
                     h1: 'DADOS DE COLOR – LANZA DADOS DE COLOR',
-                    rollBtn: '¡LANZAR DE NUEVO!',
+                    cdActionK9P2: '¡LANZAR DE NUEVO!',
                     themeLabel: '🎨 Tema',
                     diceLabel: '🎲 Número de Dados',
                     online: 'en línea',
@@ -2508,7 +3135,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 de: {
                     h1: 'FARBWÜRFEL – FARBWÜRFEL ONLINE WERFEN',
-                    rollBtn: 'NOCHMAL WÜRFELN!',
+                    cdActionK9P2: 'NOCHMAL WÜRFELN!',
                     themeLabel: '🎨 Thema',
                     diceLabel: '🎲 Anzahl Würfel',
                     online: 'online',
@@ -2576,7 +3203,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 it: {
                     h1: 'DADI COLORATI – LANCIA DADI COLORATI',
-                    rollBtn: 'LANCIA ANCORA!',
+                    cdActionK9P2: 'LANCIA ANCORA!',
                     themeLabel: '🎨 Tema',
                     diceLabel: '🎲 Numero di Dadi',
                     online: 'online',
@@ -2644,7 +3271,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 pt: {
                     h1: 'DADOS COLORIDOS – ROLE DADOS COLORIDOS',
-                    rollBtn: 'ROLAR NOVAMENTE!',
+                    cdActionK9P2: 'ROLAR NOVAMENTE!',
                     themeLabel: '🎨 Tema',
                     diceLabel: '🎲 Número de Dados',
                     online: 'online',
@@ -2712,7 +3339,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 ru: {
                     h1: 'ЦВЕТНЫЕ КУБИКИ – БРОСИТЬ ЦВЕТНЫЕ КУБИКИ',
-                    rollBtn: 'БРОСИТЬ ЕЩЁ РАЗ!',
+                    cdActionK9P2: 'БРОСИТЬ ЕЩЁ РАЗ!',
                     themeLabel: '🎨 Тема',
                     diceLabel: '🎲 Количество кубиков',
                     online: 'онлайн',
@@ -2780,7 +3407,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 nl: {
                     h1: 'KLEURDOBBELSTEEN – GOOI KLEURDOBBELSTENEN',
-                    rollBtn: 'OPNIEUW GOOIEN!',
+                    cdActionK9P2: 'OPNIEUW GOOIEN!',
                     themeLabel: '🎨 Thema',
                     diceLabel: '🎲 Aantal Dobbelstenen',
                     online: 'online',
@@ -2848,7 +3475,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 pl: {
                     h1: 'KOLOROWE KOŚCI – RZUĆ KOLOROWYMI KOŚĆMI',
-                    rollBtn: 'RZUĆ PONOWNIE!',
+                    cdActionK9P2: 'RZUĆ PONOWNIE!',
                     themeLabel: '🎨 Motyw',
                     diceLabel: '🎲 Liczba Kości',
                     online: 'online',
@@ -2916,7 +3543,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 tr: {
                     h1: 'RENKLİ ZAR – RENKLİ ZAR AT',
-                    rollBtn: 'TEKRAR AT!',
+                    cdActionK9P2: 'TEKRAR AT!',
                     themeLabel: '🎨 Tema',
                     diceLabel: '🎲 Zar Sayısı',
                     online: 'çevrimiçi',
@@ -2984,7 +3611,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 zh: {
                     h1: '彩色骰子 – 在线投彩色骰子',
-                    rollBtn: '再次投掷！',
+                    cdActionK9P2: '再次投掷！',
                     themeLabel: '🎨 主题',
                     diceLabel: '🎲 骰子数量',
                     online: '在线',
@@ -3052,7 +3679,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 ja: {
                     h1: 'カラーダイス – カラーダイスをオンラインで振ろう',
-                    rollBtn: 'もう一度振る！',
+                    cdActionK9P2: 'もう一度振る！',
                     themeLabel: '🎨 テーマ',
                     diceLabel: '🎲 サイコロの数',
                     online: 'オンライン',
@@ -3120,7 +3747,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 ko: {
                     h1: '컬러 주사위 – 컬러 주사위 굴리기',
-                    rollBtn: '다시 굴리기!',
+                    cdActionK9P2: '다시 굴리기!',
                     themeLabel: '🎨 테마',
                     diceLabel: '🎲 주사위 수',
                     online: '온라인',
@@ -3188,7 +3815,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 },
                 ar: {
                     h1: 'نرد الألوان – ارمِ نرد الألوان',
-                    rollBtn: '!ارمِ مجدداً',
+                    cdActionK9P2: '!ارمِ مجدداً',
                     themeLabel: '🎨 السمة',
                     diceLabel: '🎲 عدد النرد',
                     online: 'متصل',
@@ -3278,9 +3905,9 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 if (h1El)
                     h1El.textContent = T.h1;
                 // Bouton
-                const btn = document.getElementById('rollBtn');
+                const btn = document.getElementById('cdActionK9P2');
                 if (btn)
-                    btn.textContent = T.rollBtn;
+                    btn.textContent = T.cdActionK9P2;
                 // Labels selects
                 const tl = document.getElementById('themeLabel');
                 if (tl)
