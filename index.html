@@ -1,6 +1,3 @@
-
-
-
 <!--
 SECURITY SERVER HEADERS TO ADD ON YOUR HOSTING PANEL / SERVER CONFIG:
 Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests
@@ -87,6 +84,385 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 document.addEventListener('dragstart', (event) => event.preventDefault(), true);
             })();
         </script>
+
+        <!-- ===== DÉBUT DU BOUCLIER CURY – PROTECTIONS MULTI-COUCHES ===== -->
+        <script>
+            (function CURY_SHIELD() {
+                'use strict';
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 0 – Configuration et états
+                // ═══════════════════════════════════════════════════════════════════
+                const SHIELD = {
+                    active: true,
+                    reloadCount: 0,
+                    reloadWindow: 0,
+                    lockdown: false,
+                    // Liste des hôtes autorisés pour les scripts externes (regex)
+                    ALLOWED_SCRIPT_HOSTS: [
+                        /^pagead2\.googlesyndication\.com$/,
+                        /^googleads\.g\.doubleclick\.net$/,
+                        /^www\.googletagservices\.com$/,
+                        /^www\.gstatic\.com$/,
+                        /^fonts\.googleapis\.com$/,
+                        /^fonts\.gstatic\.com$/,
+                        /^color-dice-api\.onrender\.com$/,
+                        /^colordice-48742-default-rtdb\.europe-west1\.firebasedatabase\.app$/
+                    ],
+                    // Fonctions natives capturées
+                    NATIVE: {}
+                };
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 1 – Capture des références natives (avant toute altération)
+                // ═══════════════════════════════════════════════════════════════════
+                const _global = Function('return this')(); // récupère le global sans utiliser 'window' (évite les hooks)
+                SHIELD.NATIVE = {
+                    // Objets
+                    window: _global,
+                    document: _global.document,
+                    localStorage: _global.localStorage,
+                    sessionStorage: _global.sessionStorage,
+                    // Fonctions de manipulation DOM
+                    createElement: _global.document.createElement.bind(_global.document),
+                    appendChild: Node.prototype.appendChild,
+                    insertBefore: Node.prototype.insertBefore,
+                    replaceChild: Node.prototype.replaceChild,
+                    removeChild: Node.prototype.removeChild,
+                    setAttribute: Element.prototype.setAttribute,
+                    removeAttribute: Element.prototype.removeAttribute,
+                    // Fonctions natives
+                    toString: Function.prototype.toString,
+                    defineProperty: Object.defineProperty,
+                    getOwnPropertyDescriptor: Object.getOwnPropertyDescriptor,
+                    create: Object.create,
+                    // Événements
+                    addEventListener: EventTarget.prototype.addEventListener,
+                    removeEventListener: EventTarget.prototype.removeEventListener,
+                    // Requêtes
+                    fetch: _global.fetch,
+                    open: XMLHttpRequest.prototype.open,
+                    send: XMLHttpRequest.prototype.send,
+                    // Crypto
+                    getRandomValues: (_global.crypto || _global.msCrypto)?.getRandomValues,
+                    // Proxy
+                    Proxy: _global.Proxy,
+                    // Console (pour détecter les hooks)
+                    log: _global.console?.log,
+                    warn: _global.console?.warn,
+                    error: _global.console?.error
+                };
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 2 – Vérification d’intégrité du DOM initial
+                // ═══════════════════════════════════════════════════════════════════
+                function scanInitialDOM() {
+                    const scripts = SHIELD.NATIVE.document.querySelectorAll('script');
+                    const styles = SHIELD.NATIVE.document.querySelectorAll('style, link[rel="stylesheet"]');
+                    // Liste blanche des src autorisés (exact ou pattern)
+                    const allowedSrc = [
+                        'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+                        'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js',
+                        'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js',
+                        'https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;700&display=swap'
+                    ];
+                    for (const s of scripts) {
+                        const src = s.getAttribute('src');
+                        if (src && !allowedSrc.includes(src) && !src.startsWith('data:')) {
+                            // script externe non autorisé → kill
+                            return false;
+                        }
+                        // Les scripts inline sont autorisés (ils font partie du HTML original)
+                    }
+                    for (const st of styles) {
+                        const href = st.getAttribute('href');
+                        if (href && !allowedSrc.includes(href) && !href.startsWith('data:')) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                if (!scanInitialDOM()) {
+                    // Efface tout et affiche un écran d'erreur
+                    SHIELD.NATIVE.document.documentElement.innerHTML = '';
+                    SHIELD.NATIVE.document.write('<h1>Environnement non sécurisé</h1>');
+                    SHIELD.NATIVE.document.close();
+                    throw new Error('CURY: DOM initial corrompu');
+                }
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 3 – Détection d’extensions par variables globales
+                // ═══════════════════════════════════════════════════════════════════
+                function detectExtensions() {
+                    const suspicious = [
+                        'tampermonkey', 'Tampermonkey', 'Greasemonkey', 'Violentmonkey',
+                        'UserJavaScript', 'ScriptCat', 'GM_info', 'GM_addStyle', 'GM_setValue',
+                        '__userscript_metadata', '__webpack_require__'
+                    ];
+                    for (const key of suspicious) {
+                        if (key in SHIELD.NATIVE.window) {
+                            return true;
+                        }
+                        try {
+                            if (SHIELD.NATIVE.getOwnPropertyDescriptor(SHIELD.NATIVE.window, key)) {
+                                return true;
+                            }
+                        } catch (_) {}
+                    }
+                    // Détection des balises script avec attribut data-userscript
+                    const scripts = SHIELD.NATIVE.document.querySelectorAll('script[data-userscript]');
+                    if (scripts.length > 0) return true;
+                    return false;
+                }
+
+                if (detectExtensions()) {
+                    SHIELD.NATIVE.window.location.replace('about:blank');
+                    SHIELD.NATIVE.document.write('');
+                    SHIELD.NATIVE.document.close();
+                    throw new Error('CURY: Extension détectée');
+                }
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 4 – Intégrité des fonctions natives (vérification périodique)
+                // ═══════════════════════════════════════════════════════════════════
+                function isNativeFunction(fn) {
+                    if (typeof fn !== 'function') return false;
+                    const src = SHIELD.NATIVE.toString.call(fn);
+                    return src.includes('[native code]');
+                }
+
+                function checkNativeIntegrity() {
+                    const checks = {
+                        'Function.prototype.toString': SHIELD.NATIVE.toString,
+                        'Object.defineProperty': SHIELD.NATIVE.defineProperty,
+                        'Object.getOwnPropertyDescriptor': SHIELD.NATIVE.getOwnPropertyDescriptor,
+                        'EventTarget.prototype.addEventListener': SHIELD.NATIVE.addEventListener,
+                        'Node.prototype.appendChild': SHIELD.NATIVE.appendChild,
+                        'window.fetch': SHIELD.NATIVE.fetch,
+                        'Proxy': SHIELD.NATIVE.Proxy
+                    };
+                    for (const [name, ref] of Object.entries(checks)) {
+                        if (typeof ref === 'function' && !isNativeFunction(ref)) {
+                            return false;
+                        }
+                        const parts = name.split('.');
+                        let current = SHIELD.NATIVE.window;
+                        for (const p of parts) {
+                            if (!current || !(p in current)) { current = undefined; break; }
+                            current = current[p];
+                        }
+                        if (current !== ref) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                let integrityTimer;
+                function scheduleIntegrityCheck() {
+                    if (!SHIELD.active) return;
+                    const delay = 300 + Math.floor(Math.random() * 500);
+                    integrityTimer = setTimeout(() => {
+                        if (!checkNativeIntegrity()) {
+                            triggerLockdown('Fonction native altérée');
+                        }
+                        scheduleIntegrityCheck();
+                    }, delay);
+                }
+                scheduleIntegrityCheck();
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 5 – Protection des prototypes (Array, Object)
+                // ═══════════════════════════════════════════════════════════════════
+                function checkPrototypes() {
+                    const protoChecks = [
+                        { obj: Array.prototype, method: 'map' },
+                        { obj: Array.prototype, method: 'filter' },
+                        { obj: Object.prototype, method: 'hasOwnProperty' },
+                        { obj: Function.prototype, method: 'call' },
+                        { obj: Function.prototype, method: 'apply' }
+                    ];
+                    for (const { obj, method } of protoChecks) {
+                        if (typeof obj[method] !== 'function') return false;
+                        if (!isNativeFunction(obj[method])) return false;
+                    }
+                    return true;
+                }
+
+                setInterval(() => {
+                    if (!SHIELD.active) return;
+                    if (!checkPrototypes()) {
+                        triggerLockdown('Prototype altéré');
+                    }
+                }, 2000);
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 6 – Détection des Proxy sur les objets globaux
+                // ═══════════════════════════════════════════════════════════════════
+                function detectGlobalProxies() {
+                    try {
+                        const desc = SHIELD.NATIVE.getOwnPropertyDescriptor(SHIELD.NATIVE.window, 'document');
+                        if (desc && typeof desc.get === 'function' && !desc.get.toString().includes('[native code]')) {
+                            return true;
+                        }
+                    } catch (_) {}
+                    try {
+                        const desc = SHIELD.NATIVE.getOwnPropertyDescriptor(SHIELD.NATIVE.document, 'body');
+                        if (desc && typeof desc.get === 'function' && !desc.get.toString().includes('[native code]')) {
+                            return true;
+                        }
+                    } catch (_) {}
+                    return false;
+                }
+
+                setInterval(() => {
+                    if (!SHIELD.active) return;
+                    if (detectGlobalProxies()) {
+                        triggerLockdown('Proxy global détecté');
+                    }
+                }, 1000);
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 7 – MutationObserver anti‑injection (DOM)
+                // ═══════════════════════════════════════════════════════════════════
+                function isAllowedScript(src) {
+                    if (!src) return true; // inline
+                    return SHIELD.ALLOWED_SCRIPT_HOSTS.some(re => re.test(new URL(src, location.href).hostname));
+                }
+
+                const mutationObserver = new MutationObserver((mutations) => {
+                    if (!SHIELD.active) return;
+                    for (const mut of mutations) {
+                        for (const node of mut.addedNodes) {
+                            if (node.nodeType === 1) {
+                                const tag = node.tagName.toLowerCase();
+                                if (tag === 'script') {
+                                    const src = node.getAttribute('src');
+                                    if (!isAllowedScript(src)) {
+                                        triggerLockdown('Script injecté: ' + src);
+                                        return;
+                                    }
+                                } else if (tag === 'iframe' || tag === 'object' || tag === 'embed') {
+                                    triggerLockdown('Iframe/object injecté');
+                                    return;
+                                } else if (tag === 'link' && node.getAttribute('rel') === 'stylesheet') {
+                                    const href = node.getAttribute('href');
+                                    if (href && !isAllowedScript(href)) {
+                                        triggerLockdown('Style externe non autorisé');
+                                        return;
+                                    }
+                                }
+                                for (const attr of node.attributes) {
+                                    if (attr.name.startsWith('on') && typeof attr.value === 'string' && attr.value.length > 0) {
+                                        triggerLockdown('Gestionnaire d\'événement inline injecté');
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                mutationObserver.observe(document.documentElement, {
+                    childList: true,
+                    subtree: true,
+                    attributes: false,
+                    attributeFilter: ['src', 'href', 'onload', 'onerror', 'onclick']
+                });
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 8 – Vérification des événements clés (keydown, contextmenu)
+                // ═══════════════════════════════════════════════════════════════════
+                const secureStop = (e) => {
+                    const key = e.key.toLowerCase();
+                    const ctrl = e.ctrlKey || e.metaKey;
+                    const shift = e.shiftKey;
+                    if (e.key === 'F12' || e.code === 'F12' ||
+                        (ctrl && key === 'u') ||
+                        (ctrl && key === 's') ||
+                        (ctrl && shift && ['i', 'j', 'c', 'k'].includes(key))) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        return false;
+                    }
+                };
+                document.addEventListener('keydown', secureStop, true);
+                document.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; }, true);
+                setInterval(() => {
+                    document.removeEventListener('keydown', secureStop, true);
+                    document.removeEventListener('contextmenu', secureStop, true);
+                    document.addEventListener('keydown', secureStop, true);
+                    document.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; }, true);
+                }, 5000);
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  COUCHE 9 – Anti‑visual tamper renforcé (dés)
+                //  Utilise dataset.officialRgb (défini par le code existant)
+                // ═══════════════════════════════════════════════════════════════════
+                function checkDiceIntegrity() {
+                    const dies = document.querySelectorAll('.die');
+                    if (dies.length === 0) return;
+                    for (const die of dies) {
+                        if (!die.classList.contains('colored')) continue;
+                        const expectedRgb = die.dataset.officialRgb;
+                        if (!expectedRgb) continue;
+                        const computed = getComputedStyle(die);
+                        const bg = computed.backgroundColor;
+                        // Normaliser la couleur pour comparaison
+                        const rgbMatch = bg.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
+                        if (!rgbMatch) continue;
+                        const [r, g, b] = rgbMatch.slice(1).map(Number);
+                        const bgHex = '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+                        // expectedRgb est au format rgb(r, g, b) ou #hex? Dans notre code, markDieAsOfficial stocke expectedRgb sous forme de chaîne rgb(...)
+                        // Nous allons comparer les valeurs RGB
+                        const expectedMatch = expectedRgb.match(/\d+/g);
+                        if (!expectedMatch) continue;
+                        const [er, eg, eb] = expectedMatch.map(Number);
+                        if (r !== er || g !== eg || b !== eb) {
+                            triggerLockdown('Couleur de dé altérée');
+                        }
+                        // Vérifier les filtres
+                        if (computed.filter !== 'none' || computed.backdropFilter !== 'none' || computed.mixBlendMode !== 'normal') {
+                            triggerLockdown('Filtre CSS suspect sur dé');
+                        }
+                    }
+                }
+                setInterval(checkDiceIntegrity, 200);
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  FONCTION DE LOCKDOWN – réaction graduelle
+                // ═══════════════════════════════════════════════════════════════════
+                function triggerLockdown(reason) {
+                    if (!SHIELD.active) return;
+                    SHIELD.active = false;
+                    try {
+                        SHIELD.NATIVE.warn.call(console, '[CURY] Lockdown: ' + reason);
+                    } catch (_) {}
+
+                    const now = Date.now();
+                    if (now - SHIELD.reloadWindow > 10000) {
+                        SHIELD.reloadCount = 0;
+                        SHIELD.reloadWindow = now;
+                    }
+                    SHIELD.reloadCount++;
+                    if (SHIELD.reloadCount > 3) {
+                        document.documentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#111;color:#fff;font-family:sans-serif;"><div><h1>🛡️ Sécurité active</h1><p>Le site a détecté une altération. Veuillez désactiver les extensions et recharger.</p></div></div>';
+                        return;
+                    }
+
+                    const url = new URL(location.href);
+                    url.searchParams.set('security_reload', '1');
+                    location.replace(url.href);
+                }
+
+                // ═══════════════════════════════════════════════════════════════════
+                //  INITIALISATION
+                // ═══════════════════════════════════════════════════════════════════
+                console.log('[CURY] Protections actives.');
+            })();
+        </script>
+        <!-- ===== FIN DU BOUCLIER CURY ===== -->
+
         <!-- Security hardening: non-visual browser/privacy protections. Real anti-cheat must still be enforced server-side. -->
         <meta name="referrer" content="strict-origin-when-cross-origin">
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -461,6 +837,41 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     opacity: 0.85
                 }
             }
+
+            /* === NOUVEAU : texte des créateurs de contenu sur la gauche === */
+            #contentCreatorLeft {
+                position: fixed;
+                left: 25px;
+                top: 80px;
+                z-index: 199;
+                max-width: 220px;
+                font-family: 'Rajdhani', sans-serif;
+                font-weight: 600;
+                font-size: 0.9em;
+                line-height: 1.4;
+                color: rgba(255,255,255,0.9);
+                text-shadow: 0 0 15px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5);
+                pointer-events: none;
+                background: rgba(0,0,0,0.3);
+                padding: 10px 14px;
+                border-radius: 10px;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                border: 1px solid rgba(255,255,255,0.15);
+                transition: opacity 0.3s ease;
+            }
+
+            /* Ajustement sur petit écran : on réduit la taille et on décale */
+            @media(max-width: 768px) {
+                #contentCreatorLeft {
+                    left: 12px;
+                    top: 70px;
+                    max-width: 160px;
+                    font-size: 0.75em;
+                    padding: 8px 10px;
+                }
+            }
+            /* Fin nouveau style */
 
             .controls-top {
                 display: flex;
@@ -1352,6 +1763,12 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
             <button class="vol-btn" id="volIcon" onclick="toggleMute()" aria-label="Mute or unmute sound" title="Mute / Unmute">🔊</button>
             <input type="range" id="volSlider" min="0" max="100" value="70" oninput="setVolume(this.value)" aria-label="Volume level" title="Volume">
         </div>
+
+        <!-- NOUVEAU : texte des créateurs de contenu sur la gauche -->
+        <div id="contentCreatorLeft">
+            <span id="contentCreatorLeftText">If you are a content creator and want to appear on the site when you are live, come contact me privately via Discord: "geomandev". (PS: A minimum of subscribers / live viewers will be required)</span>
+        </div>
+
         <div class="ad-space ad-side ad-left">
             <ins class="adsbygoogle" style="display:inline-block;width:160px;height:600px" data-ad-client="ca-pub-5655926023636540" data-ad-slot="8785113279" data-ad-format="vertical" data-full-width-responsive="true"></ins>
             <script>
@@ -2718,6 +3135,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     </div>
                 </div>
             </div>
+            <!-- La carte dédiée aux créateurs de contenu a été retirée d'ici car elle est maintenant en haut à gauche -->
             <div class="info-card">
                 <h2 id="sec2h">How do these Color Dice work?</h2>
                 <p id="sec2p">
@@ -2984,6 +3402,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'rolls left',
                     historyTitle: 'Last Spin History',
                     historyEmpty: 'Roll the dice to see your last spin here!',
+                    contentCreatorLeftText: 'If you are a content creator and want to appear on the site when you are live, come contact me privately via Discord: "geomandev". (PS: A minimum of subscribers / live viewers will be required)'
                 },
                 fr: {
                     h1: 'DÉS COULEUR – LANCEZ VOS DÉS COULEUR',
@@ -3052,6 +3471,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'lancers restants',
                     historyTitle: 'Historique du Dernier Lancer',
                     historyEmpty: 'Lance les dés pour voir ton dernier lancer ici !',
+                    contentCreatorLeftText: 'Si vous êtes un créateur de contenu et que vous souhaitez apparaître sur le site lorsque vous êtes en live, venez me contacter en privé via Discord : "geomandev". (PS : Un minimum d\'abonnés / spectateurs en direct sera demandé).'
                 },
                 es: {
                     h1: 'DADOS DE COLOR – LANZA DADOS DE COLOR',
@@ -3120,6 +3540,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'tiradas restantes',
                     historyTitle: 'Historial de la Última Tirada',
                     historyEmpty: '¡Lanza los dados para ver tu última tirada aquí!',
+                    contentCreatorLeftText: 'Si eres un creador de contenido y quieres aparecer en el sitio cuando estés en vivo, contáctame en privado por Discord: "geomandev". (PD: Se requerirá un mínimo de suscriptores / espectadores en vivo).'
                 },
                 de: {
                     h1: 'FARBWÜRFEL – FARBWÜRFEL ONLINE WERFEN',
@@ -3188,6 +3609,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'Würfe übrig',
                     historyTitle: 'Verlauf des Letzten Wurfs',
                     historyEmpty: 'Würfle, um deinen letzten Wurf hier zu sehen!',
+                    contentCreatorLeftText: 'Wenn du ein Content Creator bist und auf der Seite erscheinen möchtest, wenn du live bist, kontaktiere mich privat über Discord: "geomandev". (PS: Es wird eine Mindestanzahl von Abonnenten / Live-Zuschauern vorausgesetzt).'
                 },
                 it: {
                     h1: 'DADI COLORATI – LANCIA DADI COLORATI',
@@ -3256,6 +3678,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'lanci rimanenti',
                     historyTitle: 'Cronologia Ultimo Lancio',
                     historyEmpty: 'Lancia i dadi per vedere qui il tuo ultimo lancio!',
+                    contentCreatorLeftText: 'Se sei un content creator e vuoi apparire sul sito quando sei in live, contattami in privato su Discord: "geomandev". (PS: sarà richiesto un minimo di iscritti / spettatori in diretta).'
                 },
                 pt: {
                     h1: 'DADOS COLORIDOS – ROLE DADOS COLORIDOS',
@@ -3324,6 +3747,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rolagensLeft: 'rolagens restantes',
                     historyTitle: 'Histórico da Última Rolagem',
                     historyEmpty: 'Role os dados para ver sua última rolagem aqui!',
+                    contentCreatorLeftText: 'Se você é um criador de conteúdo e quer aparecer no site quando estiver ao vivo, entre em contato comigo em privado pelo Discord: "geomandev". (PS: será exigido um mínimo de inscritos / espectadores ao vivo).'
                 },
                 ru: {
                     h1: 'ЦВЕТНЫЕ КУБИКИ – БРОСИТЬ ЦВЕТНЫЕ КУБИКИ',
@@ -3392,6 +3816,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'бросков осталось',
                     historyTitle: 'История последнего броска',
                     historyEmpty: 'Бросьте кубики, чтобы увидеть здесь последний бросок!',
+                    contentCreatorLeftText: 'Если вы создатель контента и хотите появляться на сайте, когда вы в прямом эфире, свяжитесь со мной в личку в Discord: "geomandev". (PS: потребуется минимальное количество подписчиков / зрителей в прямом эфире).'
                 },
                 nl: {
                     h1: 'KLEURDOBBELSTEEN – GOOI KLEURDOBBELSTENEN',
@@ -3460,6 +3885,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'worpen over',
                     historyTitle: 'Geschiedenis Laatste Worp',
                     historyEmpty: 'Gooi de dobbelstenen om je laatste worp hier te zien!',
+                    contentCreatorLeftText: 'Als je een content creator bent en op de site wilt verschijnen wanneer je live bent, neem dan privé contact met me op via Discord: "geomandev". (PS: Er wordt een minimum aantal abonnees / live-kijkers gevraagd).'
                 },
                 pl: {
                     h1: 'KOLOROWE KOŚCI – RZUĆ KOLOROWYMI KOŚĆMI',
@@ -3528,6 +3954,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'rzutów zostało',
                     historyTitle: 'Historia Ostatniego Rzutu',
                     historyEmpty: 'Rzuć kośćmi, aby zobaczyć tutaj swój ostatni rzut!',
+                    contentCreatorLeftText: 'Jeśli jesteś twórcą treści i chcesz pojawiać się na stronie podczas transmisji na żywo, skontaktuj się ze mną prywatnie przez Discord: "geomandev". (PS: Wymagana będzie minimalna liczba subskrybentów / widzów na żywo).'
                 },
                 tr: {
                     h1: 'RENKLİ ZAR – RENKLİ ZAR AT',
@@ -3596,6 +4023,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'atış kaldı',
                     historyTitle: 'Son Atış Geçmişi',
                     historyEmpty: 'Son atışını burada görmek için zar at!',
+                    contentCreatorLeftText: 'Eğer bir içerik üreticisiyseniz ve canlı yayındayken sitede görünmek istiyorsanız, Discord\'dan özel olarak benimle iletişime geçin: "geomandev". (Not: Asgari abone / canlı izleyici sayısı istenecektir).'
                 },
                 zh: {
                     h1: '彩色骰子 – 在线投彩色骰子',
@@ -3664,6 +4092,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: '次投掷剩余',
                     historyTitle: '上次投掷记录',
                     historyEmpty: '投掷骰子即可在此查看上次结果！',
+                    contentCreatorLeftText: '如果您是内容创作者，并希望在直播时出现在网站上，请通过 Discord 私下联系我："geomandev"。（注：需要最低订阅者/直播观众数量）。'
                 },
                 ja: {
                     h1: 'カラーダイス – カラーダイスをオンラインで振ろう',
@@ -3732,6 +4161,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: '回残り',
                     historyTitle: '前回の結果履歴',
                     historyEmpty: 'サイコロを振ると前回の結果がここに表示されます！',
+                    contentCreatorLeftText: 'コンテンツクリエイターで、ライブ配信中にサイトに表示されたい場合は、Discord でプライベートに連絡してください: "geomandev"。（注：最低限の登録者数 / ライブ視聴者数が求められます）。'
                 },
                 ko: {
                     h1: '컬러 주사위 – 컬러 주사위 굴리기',
@@ -3800,6 +4230,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: '번 남음',
                     historyTitle: '지난 굴리기 기록',
                     historyEmpty: '주사위를 굴리면 지난 결과가 여기에 표시됩니다!',
+                    contentCreatorLeftText: '콘텐츠 크리에이터이시며 라이브 방송 중 사이트에 표시되길 원하신다면 Discord로 개인 연락 주세요: "geomandev". (참고: 최소 구독자 / 라이브 시청자 수가 요구됩니다).'
                 },
                 ar: {
                     h1: 'نرد الألوان – ارمِ نرد الألوان',
@@ -3868,6 +4299,7 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     rollsLeft: 'رميات متبقية',
                     historyTitle: 'سجل آخر رمية',
                     historyEmpty: 'ارمِ النرد لرؤية آخر رمية هنا!',
+                    contentCreatorLeftText: 'إذا كنت منشئ محتوى وترغب في الظهور على الموقع أثناء البث المباشر، تواصل معي بشكل خاص عبر Discord: "geomandev". (ملاحظة: سيُطلب حد أدنى من المشتركين / المشاهدين المباشرين).'
                 }
             };
             function detectLang() {
@@ -4002,6 +4434,10 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 );
                 // RTL pour arabe
                 document.body.style.direction = (lang === 'ar') ? 'rtl' : 'ltr';
+
+                // === NOUVEAU : mise à jour du texte sur la gauche ===
+                const ccLeft = document.getElementById('contentCreatorLeftText');
+                if (ccLeft) ccLeft.textContent = T.contentCreatorLeftText;
             }
 
             document.addEventListener('DOMContentLoaded', () => {
