@@ -3018,10 +3018,12 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                     const serverSpin = await requestServerRoll(dies.length);
                     lastSpin = serverSpin || getLocalSecureRoll(dies.length);
 
-                    // Le joueur a arrêté de spam/faire combo: on sauvegarde le vrai résultat,
-                    // puis on refresh immédiatement AVANT d'afficher les couleurs.
-                    // Après le reload, showFirstRollOnLoad() réaffiche directement les couleurs sauvegardées.
-                    refreshAfterFinalRoll(lastSpin);
+                    // FIX FIREBASE/BANDE PASSANTE:
+                    // On garde le résultat officiel mais on ne recharge plus toute la page.
+                    // L'animation déjà présente affiche le résultat sans reconnecter Firebase.
+                    saveDisplayedRoll(lastSpin, false);
+                    comboCount = 0;
+                    applySpinRevealAnimation(lastSpin, spinNumber);
                     return;
 
                     renderHistory();
@@ -3291,7 +3293,8 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
         </div>
         <script type="module">
             import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-            import {getDatabase, ref, onValue, onDisconnect, set, push} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+            import {getDatabase, ref, onValue, onDisconnect, set, onChildAdded, onChildRemoved} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
             const firebaseConfig = {
                 apiKey: "AIzaSyAqQgoFrIeSbF5A8KIaq3EKSrq957UXBSU",
                 authDomain: "colordice-48742.firebaseapp.com",
@@ -3301,34 +3304,68 @@ Combo spam-click behavior is preserved: repeated clicks before reveal count as c
                 messagingSenderId: "758300030313",
                 appId: "1:758300030313:web:0b2f7cbe8260ac0fb879f8"
             };
+
             const app = initializeApp(firebaseConfig);
             const db = getDatabase(app);
-            let deviceId = localStorage.getItem(['__','device','_','cd','_','9'].join(''));
+
+            // Un ID stable par navigateur/appareil, comme avant.
+            const DEVICE_KEY = ['__','device','_','cd','_','9'].join('');
+            let deviceId = localStorage.getItem(DEVICE_KEY);
             if (!deviceId) {
                 deviceId = 'user_' + (window.secureRandomHex ? window.secureRandomHex(9) : Date.now().toString(36));
-                localStorage.setItem(['__','device','_','cd','_','9'].join(''), deviceId);
+                localStorage.setItem(DEVICE_KEY, deviceId);
             }
-            const myDeviceRef = ref(db, `online_users/${deviceId}`);
+
+            // Un ID stable par onglet. sessionStorage survit aux reloads du même onglet,
+            // donc une reconnexion ne crée pas une nouvelle entrée aléatoire à chaque fois.
+            const TAB_KEY = ['__','tab','_','cd','_','9'].join('');
+            let tabId = sessionStorage.getItem(TAB_KEY);
+            if (!tabId) {
+                tabId = 'tab_' + (window.secureRandomHex ? window.secureRandomHex(9) : Date.now().toString(36));
+                sessionStorage.setItem(TAB_KEY, tabId);
+            }
+
+            const tabRef = ref(db, `online_users/${deviceId}/${tabId}`);
             const connectedRef = ref(db, ".info/connected");
-            onValue(connectedRef, (snap) => {
-                if (snap.val() === true) {
-                    const tabRef = push(myDeviceRef);
-                    onDisconnect(tabRef).remove();
-                    set(tabRef, true);
+
+            // IMPORTANT : Firebase confirme d'abord le nettoyage à la déconnexion,
+            // puis seulement après on marque cet onglet comme connecté.
+            onValue(connectedRef, async (snap) => {
+                if (snap.val() !== true) return;
+
+                try {
+                    await onDisconnect(tabRef).remove();
+                    await set(tabRef, true);
+                } catch (err) {
+                    console.warn("[ColorDice Presence] Presence registration failed:", err);
                 }
-            }
-            );
+            });
+
             const visitorsRef = ref(db, "online_users");
-            onValue(visitorsRef, (snap) => {
-                const count = snap.size || 1;
+            const onlineDevices = new Set();
+
+            function updateOnlineCounter() {
+                // Même logique visible qu'avant : nombre de deviceId au premier niveau.
+                const count = Math.max(1, onlineDevices.size);
+
                 const c = document.getElementById("online-count");
-                if (c)
-                    c.textContent = count;
+                if (c) c.textContent = count;
+
                 const a = document.getElementById("api-count");
-                if (a)
-                    a.textContent = count;
+                if (a) a.textContent = count;
             }
-            );
+
+            // On n'écoute plus tout le gros arbre online_users avec onValue().
+            // Ces événements ne renvoient que le device ajouté/supprimé.
+            onChildAdded(visitorsRef, (snap) => {
+                if (snap.key) onlineDevices.add(snap.key);
+                updateOnlineCounter();
+            });
+
+            onChildRemoved(visitorsRef, (snap) => {
+                if (snap.key) onlineDevices.delete(snap.key);
+                updateOnlineCounter();
+            });
         </script>
         <script>
             // ════════════════════════════════════════════════════════
